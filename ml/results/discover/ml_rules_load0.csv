@@ -1,0 +1,66 @@
+fault,feature,kind,dir,speeds_found,speeds_consistent,kept,other_load_same_threshold,other_load_pattern,relation,meaning
+bowed_rotor,xch__accel3_mic__sk_rise_ratio,P,low,"[2, 5, 6, 7, 8]","[5, 6, 7, 8]",True,[],[],new idea,sk_rise_ratio: accel3 / mic ratio vs healthy
+bowed_rotor,xch__accel3_mic__sk_rise_ratio,S,<=,[3],[3],True,[],[],new idea,sk_rise_ratio: accel3 / mic ratio vs healthy
+bowed_rotor,rel__mic__sk_rise_ratio,P,high,"[5, 7, 8]","[5, 7]",False,[],[],new idea,mic sk_rise_ratio vs healthy
+bowed_rotor,xch__accel3_mic__sk_mean_above_transition,P,low,"[5, 6, 7]","[5, 7]",False,[],[],new idea,sk_mean_above_transition: accel3 / mic ratio vs healthy
+bowed_rotor,xch__accel3_mic__sk_mean_above_transition,S,<=,[8],[8],True,[],[],new idea,sk_mean_above_transition: accel3 / mic ratio vs healthy
+bowed_rotor,xch__accel2_accel3__dwt_D1_energy_frac,S,>=,[3],[3],True,[],[],new idea,dwt_D1_energy_frac: accel2 / accel3 ratio vs healthy
+bowed_rotor,xch__accel2_accel3__psd_frac_2000_5000,S,>=,"[3, 5]","[3, 5]",True,[],[],new idea,psd_frac_2000_5000: accel2 / accel3 ratio vs healthy
+bowed_rotor,xch__accel2_mic__fft_spectral_flatness,S,>=,[6],[],False,[],[],new idea,fft_spectral_flatness: accel2 / mic ratio vs healthy
+bowed_rotor,xch__accel1_mic__sk_peak_value,S,>=,"[2, 6, 8]","[6, 8]",True,[],[8],new idea,sk_peak_value: accel1 / mic ratio vs healthy
+bowed_rotor,xch__accel1_mic__sk_rise_ratio,P,low,"[2, 5, 8]",[],False,[],[],new idea,sk_rise_ratio: accel1 / mic ratio vs healthy
+bowed_rotor,xch__accel1_mic__sk_rise_ratio,S,<=,"[4, 6]",[],False,[],[],new idea,sk_rise_ratio: accel1 / mic ratio vs healthy
+bowed_rotor,xch__accel3_mic__psd_frac_1000_2000,S,<=,"[1, 4, 6]","[1, 4]",True,[],[4],new idea,psd_frac_1000_2000: accel3 / mic ratio vs healthy
+faulty_bearing,xch__accel1_accel2__fft_spectral_flatness,P,high,"[2, 3, 4, 5, 6, 7, 8]","[2, 3, 4, 5, 6, 7, 8]",True,"[2, 3, 4, 5, 6, 7, 8]","[2, 3, 4, 5, 6, 7, 8]",new idea,fft_spectral_flatness: accel1 / accel2 ratio vs healthy
+faulty_bearing,xch__accel1_accel2__psd_frac_5000_10000,P,high,"[2, 3, 4, 5, 6, 7, 8]","[2, 3, 4, 5, 6, 7, 8]",True,"[2, 3, 4, 5, 6, 7, 8]","[2, 3, 4, 5, 6, 7, 8]",new idea,psd_frac_5000_10000: accel1 / accel2 ratio vs healthy
+faulty_bearing,xch__accel1_accel2__psd_frac_10000_20833,P,high,"[3, 4, 5, 6, 7]","[3, 4, 5, 7]",True,"[4, 5, 7]","[3, 4, 5, 7]",new idea,psd_frac_10000_20833: accel1 / accel2 ratio vs healthy
+faulty_bearing,xch__accel1_accel2__psd_frac_10000_20833,S,>=,"[2, 8]","[2, 8]",True,[8],[8],new idea,psd_frac_10000_20833: accel1 / accel2 ratio vs healthy
+faulty_bearing,rel__accel1__fft_spectral_centroid_hz,P,high,"[5, 6, 7]","[5, 6, 7]",True,"[5, 6, 7]","[5, 6, 7]",new idea,accel1 fft_spectral_centroid_hz vs healthy
+faulty_bearing,xch__accel1_accel2__dwt_d4_frac,P,high,"[1, 2, 3, 5, 7]","[1, 2, 3, 5, 7]",True,"[1, 2]","[1, 2, 3]",extends hand trigger feature accel1__dwt_d4_frac,dwt_d4_frac: accel1 / accel2 ratio vs healthy
+faulty_bearing,xch__accel1_mic__fft_spectral_centroid_hz,P,high,"[2, 4, 5]","[2, 4]",False,[4],"[2, 4]",new idea,fft_spectral_centroid_hz: accel1 / mic ratio vs healthy
+faulty_bearing,xch__accel1_mic__fft_spectral_centroid_hz,S,>=,[6],[],False,[],[],new idea,fft_spectral_centroid_hz: accel1 / mic ratio vs healthy
+faulty_bearing,xch__accel1_accel3__dwt_D4_energy_frac,P,high,"[2, 3, 4, 5, 7]","[2, 3, 5, 7]",True,"[2, 3]","[2, 3, 7]",new idea,dwt_D4_energy_frac: accel1 / accel3 ratio vs healthy
+faulty_bearing,xch__accel1_accel3__dwt_D4_energy_frac,S,>=,[1],[1],True,[1],[1],new idea,dwt_D4_energy_frac: accel1 / accel3 ratio vs healthy
+faulty_bearing,xch__accel1_accel2__dwt_hf_frac,P,high,"[2, 3, 4, 5, 7]","[2, 3, 4, 5, 7]",True,"[2, 5, 7]","[2, 3, 4, 5, 7]",extends hand trigger feature accel1__dwt_hf_frac,dwt_hf_frac: accel1 / accel2 ratio vs healthy
+faulty_bearing,rel__accel1__psd_frac_1000_2000,P,high,"[1, 2, 5, 7]","[1, 2, 5, 7]",True,[1],"[1, 2]",new idea,accel1 psd_frac_1000_2000 vs healthy
+faulty_bearing,xch__accel1_mic__dwt_d4_frac,P,high,"[1, 2, 5, 7]","[1, 2, 5, 7]",True,[1],"[1, 2]",extends hand trigger feature accel1__dwt_d4_frac,dwt_d4_frac: accel1 / mic ratio vs healthy
+faulty_bearing,xch__accel1_mic__dwt_d4_frac,S,>=,[3],[3],True,[],[3],extends hand trigger feature accel1__dwt_d4_frac,dwt_d4_frac: accel1 / mic ratio vs healthy
+faulty_bearing,xch__accel3_mic__sk_area_frac_above_transition,S,>=,[6],[],False,[],[],new idea,sk_area_frac_above_transition: accel3 / mic ratio vs healthy
+faulty_bearing,xch__accel1_accel2__psd_centroid_hz,P,high,"[2, 5, 7]","[2, 5, 7]",True,"[2, 7]","[2, 5, 7]",new idea,psd_centroid_hz: accel1 / accel2 ratio vs healthy
+faulty_bearing,xch__accel1_accel2__psd_centroid_hz,S,>=,[3],[3],True,[],[3],new idea,psd_centroid_hz: accel1 / accel2 ratio vs healthy
+faulty_bearing,xch__accel1_accel2__psd_frac_2000_5000,S,>=,"[3, 5]",[3],True,[],[],new idea,psd_frac_2000_5000: accel1 / accel2 ratio vs healthy
+faulty_bearing,xch__accel1_accel2__psd_frac_1000_2000,P,high,"[1, 2, 3, 5, 7]","[1, 2, 3, 5, 7]",True,"[1, 2, 3]","[1, 2, 3]",new idea,psd_frac_1000_2000: accel1 / accel2 ratio vs healthy
+faulty_bearing,xch__accel1_accel2__stat_variance,S,>=,[1],[1],True,[],[],new idea,stat_variance: accel1 / accel2 ratio vs healthy
+faulty_bearing,xch__accel1_mic__dwt_D2_energy_frac,S,>=,"[4, 5, 6, 7]",[4],True,[4],[4],new idea,dwt_D2_energy_frac: accel1 / mic ratio vs healthy
+faulty_bearing,xch__accel1_accel2__psd_frac_500_1000,S,<=,"[1, 2, 4]","[1, 2, 4]",True,[],[4],new idea,psd_frac_500_1000: accel1 / accel2 ratio vs healthy
+broken_rotor_bars,xch__accel1_accel2__psd_frac_2000_5000,P,high,"[4, 6, 8]","[4, 6, 8]",True,[],"[4, 8]",new idea,psd_frac_2000_5000: accel1 / accel2 ratio vs healthy
+broken_rotor_bars,xch__accel3_mic__psd_frac_5000_10000,S,<=,"[2, 4]","[2, 4]",True,[],[],new idea,psd_frac_5000_10000: accel3 / mic ratio vs healthy
+broken_rotor_bars,xch__accel1_accel2__dwt_d4_frac,S,>=,[8],[],False,[],[],"extends hand trigger feature accel1__dwt_d4_frac, accel2__dwt_d4_frac",dwt_d4_frac: accel1 / accel2 ratio vs healthy
+broken_rotor_bars,xch__accel1_accel3__stat_crest_factor,S,<=,[7],[],False,[],[],new idea,stat_crest_factor: accel1 / accel3 ratio vs healthy
+broken_rotor_bars,xch__accel2_accel3__stat_crest_factor,S,<=,"[1, 4]",[],False,[],[],new idea,stat_crest_factor: accel2 / accel3 ratio vs healthy
+broken_rotor_bars,xch__accel3_mic__sk_med_5_20k,S,<=,[3],[],False,[],[],new idea,sk_med_5_20k: accel3 / mic ratio vs healthy
+broken_rotor_bars,xch__accel1_mic__psd_frac_500_1000,S,>=,"[1, 5]",[1],True,[],[],new idea,psd_frac_500_1000: accel1 / mic ratio vs healthy
+broken_rotor_bars,xch__accel2_accel3__psd_frac_5000_10000,S,>=,[4],[4],True,[],[],new idea,psd_frac_5000_10000: accel2 / accel3 ratio vs healthy
+rotor_misalignment,xch__accel1_accel2__psd_frac_5000_10000,S,<=,"[1, 2, 5]","[1, 2]",True,[],[2],new idea,psd_frac_5000_10000: accel1 / accel2 ratio vs healthy
+rotor_misalignment,rel__accel1__psd_frac_2000_5000,P,low,"[3, 5, 7]","[3, 5, 7]",True,[],[],new idea,accel1 psd_frac_2000_5000 vs healthy
+rotor_misalignment,xch__accel1_accel3__sk_med_1_5k,S,>=,[7],[],False,[],[],extends hand trigger feature accel1__sk_med_1_5k,sk_med_1_5k: accel1 / accel3 ratio vs healthy
+rotor_misalignment,xch__accel1_accel2__dwt_D3_energy_frac,S,<=,"[1, 4]","[1, 4]",True,[],[],new idea,dwt_D3_energy_frac: accel1 / accel2 ratio vs healthy
+rotor_misalignment,xch__accel1_accel3__psd_frac_2000_5000,S,<=,"[1, 2, 5, 7]","[1, 2, 5, 7]",True,[],[],new idea,psd_frac_2000_5000: accel1 / accel3 ratio vs healthy
+rotor_misalignment,xch__accel3_mic__sk_rise_ratio,S,<=,"[1, 2]",[],False,[],[],new idea,sk_rise_ratio: accel3 / mic ratio vs healthy
+rotor_misalignment,xch__accel1_mic__sk_mean_below_transition,S,>=,"[1, 2, 3, 6]",[],False,[],[],new idea,sk_mean_below_transition: accel1 / mic ratio vs healthy
+rotor_misalignment,xch__accel2_accel3__stat_peak,S,>=,"[2, 4]",[],False,[],[],extends hand trigger feature accel2__stat_peak,stat_peak: accel2 / accel3 ratio vs healthy
+rotor_unbalance,rel__accel1__psd_frac_1000_2000,P,low,"[3, 6, 8]","[3, 6, 8]",True,[],[8],new idea,accel1 psd_frac_1000_2000 vs healthy
+rotor_unbalance,xch__accel1_accel3__dwt_d4_frac,S,<=,"[2, 7]",[2],True,[],[],extends hand trigger feature accel1__dwt_d4_frac,dwt_d4_frac: accel1 / accel3 ratio vs healthy
+rotor_unbalance,xch__accel1_accel3__sk_peak_value,S,<=,"[4, 7]",[],False,[],[],new idea,sk_peak_value: accel1 / accel3 ratio vs healthy
+rotor_unbalance,xch__accel1_accel2__dwt_d4_frac,S,<=,"[2, 7]",[2],True,[],[2],extends hand trigger feature accel1__dwt_d4_frac,dwt_d4_frac: accel1 / accel2 ratio vs healthy
+rotor_unbalance,xch__accel2_accel3__psd_frac_500_1000,S,>=,"[3, 8]",[3],True,[],[3],new idea,psd_frac_500_1000: accel2 / accel3 ratio vs healthy
+rotor_unbalance,xch__accel1_mic__sk_peak_value,S,<=,[4],[],False,[],[],new idea,sk_peak_value: accel1 / mic ratio vs healthy
+rotor_unbalance,xch__accel3_mic__psd_frac_500_1000,S,<=,[4],[],False,[],[],new idea,psd_frac_500_1000: accel3 / mic ratio vs healthy
+stator_winding,rel__accel2__dwt_D1_energy_frac,P,high,"[2, 5, 7]","[2, 5, 7]",True,[],[7],new idea,accel2 dwt_D1_energy_frac vs healthy
+stator_winding,xch__accel2_accel3__psd_frac_1000_2000,S,>=,"[3, 4, 6, 7, 8]","[3, 4, 6, 8]",True,[],[],new idea,psd_frac_1000_2000: accel2 / accel3 ratio vs healthy
+stator_winding,xch__accel1_accel3__sk_med_1_5k,S,>=,[5],[],False,[],[],"extends hand trigger feature accel1__sk_med_1_5k, accel3__sk_med_1_5k",sk_med_1_5k: accel1 / accel3 ratio vs healthy
+stator_winding,xch__accel1_accel3__sk_mean_below_transition,P,high,"[4, 5, 8]",[],False,[],[],new idea,sk_mean_below_transition: accel1 / accel3 ratio vs healthy
+stator_winding,rel__accel1__sk_peak_value,P,high,"[5, 7, 8]","[5, 7]",False,[],[],new idea,accel1 sk_peak_value vs healthy
+stator_winding,xch__accel1_accel2__sk_mean_above_transition,S,>=,"[5, 7]","[5, 7]",True,[],[],new idea,sk_mean_above_transition: accel1 / accel2 ratio vs healthy
+stator_winding,rel__accel2__psd_frac_1000_2000,P,high,"[3, 5, 7]","[3, 5, 7]",True,[],[],new idea,accel2 psd_frac_1000_2000 vs healthy
+stator_winding,xch__accel2_accel3__stat_crest_factor,S,<=,"[3, 6, 7]",[3],True,[],[],new idea,stat_crest_factor: accel2 / accel3 ratio vs healthy

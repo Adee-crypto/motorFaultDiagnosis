@@ -1,0 +1,57 @@
+Random forest, leave-one-speed-out, 390 ML features, 48 fault runs
+  accuracy on the unseen speed: 65%   (chance: mean 18%, 95th pct 24%, p = 0.00)
+
+Rules kept after the consistency check, vs shuffled check labels:
+                    rules_found  kept_real  chance_mean  chance_95pct      p
+bowed_rotor                12.0        7.0         0.85           2.0  0.000
+faulty_bearing             22.0       19.0         0.66           2.0  0.000
+broken_rotor_bars           8.0        4.0         0.08           1.0  0.000
+rotor_misalignment          8.0        4.0         0.80           2.0  0.005
+rotor_unbalance             7.0        4.0         0.23           1.0  0.000
+stator_winding              8.0        5.0         0.65           2.0  0.000
+ALL                        65.0       43.0         3.28           6.0  0.000
+
+43 ML triggers kept -> ml_triggers_load0.json
+  ML0_BR_P00       bowed_rotor          sk_rise_ratio: accel3 / mic ratio vs healthy         speeds [5, 6, 7, 8]       NEW
+  ML0_BR_S01       bowed_rotor          sk_rise_ratio: accel3 / mic ratio vs healthy         speeds [3]                NEW
+  ML0_BR_S02       bowed_rotor          sk_mean_above_transition: accel3 / mic ratio vs healthy speeds [8]                NEW
+  ML0_BR_S03       bowed_rotor          dwt_D1_energy_frac: accel2 / accel3 ratio vs healthy speeds [3]                NEW
+  ML0_BR_S04       bowed_rotor          psd_frac_2000_5000: accel2 / accel3 ratio vs healthy speeds [3, 5]             NEW
+  ML0_BR_S05       bowed_rotor          sk_peak_value: accel1 / mic ratio vs healthy         speeds [6, 8]             NEW
+  ML0_BR_S06       bowed_rotor          psd_frac_1000_2000: accel3 / mic ratio vs healthy    speeds [1, 4]             NEW
+  ML0_FB_P07       faulty_bearing       fft_spectral_flatness: accel1 / accel2 ratio vs healthy speeds [2, 3, 4, 5, 6, 7, 8] NEW
+  ML0_FB_P08       faulty_bearing       psd_frac_5000_10000: accel1 / accel2 ratio vs healthy speeds [2, 3, 4, 5, 6, 7, 8] NEW
+  ML0_FB_P09       faulty_bearing       psd_frac_10000_20833: accel1 / accel2 ratio vs healthy speeds [3, 4, 5, 7]       NEW
+  ML0_FB_S10       faulty_bearing       psd_frac_10000_20833: accel1 / accel2 ratio vs healthy speeds [2, 8]             NEW
+  ML0_FB_P11       faulty_bearing       accel1 fft_spectral_centroid_hz vs healthy           speeds [5, 6, 7]          NEW
+  ML0_FB_P12       faulty_bearing       dwt_d4_frac: accel1 / accel2 ratio vs healthy        speeds [1, 2, 3, 5, 7]    extends hand
+  ML0_FB_P13       faulty_bearing       dwt_D4_energy_frac: accel1 / accel3 ratio vs healthy speeds [2, 3, 5, 7]       NEW
+  ML0_FB_S14       faulty_bearing       dwt_D4_energy_frac: accel1 / accel3 ratio vs healthy speeds [1]                NEW
+  ML0_FB_P15       faulty_bearing       dwt_hf_frac: accel1 / accel2 ratio vs healthy        speeds [2, 3, 4, 5, 7]    extends hand
+  ML0_FB_P16       faulty_bearing       accel1 psd_frac_1000_2000 vs healthy                 speeds [1, 2, 5, 7]       NEW
+  ML0_FB_P17       faulty_bearing       dwt_d4_frac: accel1 / mic ratio vs healthy           speeds [1, 2, 5, 7]       extends hand
+  ML0_FB_S18       faulty_bearing       dwt_d4_frac: accel1 / mic ratio vs healthy           speeds [3]                extends hand
+  ML0_FB_P19       faulty_bearing       psd_centroid_hz: accel1 / accel2 ratio vs healthy    speeds [2, 5, 7]          NEW
+  ML0_FB_S20       faulty_bearing       psd_centroid_hz: accel1 / accel2 ratio vs healthy    speeds [3]                NEW
+  ML0_FB_S21       faulty_bearing       psd_frac_2000_5000: accel1 / accel2 ratio vs healthy speeds [3]                NEW
+  ML0_FB_P22       faulty_bearing       psd_frac_1000_2000: accel1 / accel2 ratio vs healthy speeds [1, 2, 3, 5, 7]    NEW
+  ML0_FB_S23       faulty_bearing       stat_variance: accel1 / accel2 ratio vs healthy      speeds [1]                NEW
+  ML0_FB_S24       faulty_bearing       dwt_D2_energy_frac: accel1 / mic ratio vs healthy    speeds [4]                NEW
+  ML0_FB_S25       faulty_bearing       psd_frac_500_1000: accel1 / accel2 ratio vs healthy  speeds [1, 2, 4]          NEW
+  ML0_KA_P26       broken_rotor_bars    psd_frac_2000_5000: accel1 / accel2 ratio vs healthy speeds [4, 6, 8]          NEW
+  ML0_KA_S27       broken_rotor_bars    psd_frac_5000_10000: accel3 / mic ratio vs healthy   speeds [2, 4]             NEW
+  ML0_KA_S28       broken_rotor_bars    psd_frac_500_1000: accel1 / mic ratio vs healthy     speeds [1]                NEW
+  ML0_KA_S29       broken_rotor_bars    psd_frac_5000_10000: accel2 / accel3 ratio vs healthy speeds [4]                NEW
+  ML0_RM_S30       rotor_misalignment   psd_frac_5000_10000: accel1 / accel2 ratio vs healthy speeds [1, 2]             NEW
+  ML0_RM_P31       rotor_misalignment   accel1 psd_frac_2000_5000 vs healthy                 speeds [3, 5, 7]          NEW
+  ML0_RM_S32       rotor_misalignment   dwt_D3_energy_frac: accel1 / accel2 ratio vs healthy speeds [1, 4]             NEW
+  ML0_RM_S33       rotor_misalignment   psd_frac_2000_5000: accel1 / accel3 ratio vs healthy speeds [1, 2, 5, 7]       NEW
+  ML0_RU_P34       rotor_unbalance      accel1 psd_frac_1000_2000 vs healthy                 speeds [3, 6, 8]          NEW
+  ML0_RU_S35       rotor_unbalance      dwt_d4_frac: accel1 / accel3 ratio vs healthy        speeds [2]                extends hand
+  ML0_RU_S36       rotor_unbalance      dwt_d4_frac: accel1 / accel2 ratio vs healthy        speeds [2]                extends hand
+  ML0_RU_S37       rotor_unbalance      psd_frac_500_1000: accel2 / accel3 ratio vs healthy  speeds [3]                NEW
+  ML0_SW_P38       stator_winding       accel2 dwt_D1_energy_frac vs healthy                 speeds [2, 5, 7]          NEW
+  ML0_SW_S39       stator_winding       psd_frac_1000_2000: accel2 / accel3 ratio vs healthy speeds [3, 4, 6, 8]       NEW
+  ML0_SW_S40       stator_winding       sk_mean_above_transition: accel1 / accel2 ratio vs healthy speeds [5, 7]             NEW
+  ML0_SW_P41       stator_winding       accel2 psd_frac_1000_2000 vs healthy                 speeds [3, 5, 7]          NEW
+  ML0_SW_S42       stator_winding       stat_crest_factor: accel2 / accel3 ratio vs healthy  speeds [3]                NEW

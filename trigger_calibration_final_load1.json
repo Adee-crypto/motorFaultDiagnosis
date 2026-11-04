@@ -1,0 +1,1647 @@
+{
+ "load": 1,
+ "triggers": {
+  "FB_hf": {
+   "fault": "faulty_bearing",
+   "feature": "accel1__dwt_hf_frac",
+   "weight": 1.5,
+   "note": "most accel-1 energy above 2.6 kHz (both loads)",
+   "by_condition": {
+    "2": {
+     "op": ">=",
+     "lo": 0.02532950024391614,
+     "hi": null,
+     "value": 0.0382784909615585,
+     "neighbour": "stator_winding",
+     "separation": 0.8258368214634473,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    },
+    "3": {
+     "op": ">=",
+     "lo": 0.007399878523355159,
+     "hi": null,
+     "value": 0.024496092827428,
+     "neighbour": "stator_winding",
+     "separation": 2.3941000881777708,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    },
+    "4": {
+     "op": ">=",
+     "lo": 0.012153272418624994,
+     "hi": null,
+     "value": 0.0186525768231515,
+     "neighbour": "broken_rotor_bars",
+     "separation": 0.8567716712361961,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    },
+    "5": {
+     "op": ">=",
+     "lo": 0.018540780205471095,
+     "hi": null,
+     "value": 0.0257098150914488,
+     "neighbour": "rotor_misalignment",
+     "separation": 0.6538003752657646,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    },
+    "6": {
+     "op": ">=",
+     "lo": 0.0057335536447557746,
+     "hi": null,
+     "value": 0.0111718693586799,
+     "neighbour": "rotor_misalignment",
+     "separation": 1.334126867105943,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    },
+    "7": {
+     "op": ">=",
+     "lo": 0.016457921895860976,
+     "hi": null,
+     "value": 0.0260846480668519,
+     "neighbour": "stator_winding",
+     "separation": 0.9210800181851506,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    },
+    "8": {
+     "op": ">=",
+     "lo": 0.005571388610652512,
+     "hi": null,
+     "value": 0.0120567653970034,
+     "neighbour": "rotor_misalignment",
+     "separation": 1.5439632430383883,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "both",
+   "tier": "confirmed"
+  },
+  "FB_d4": {
+   "fault": "faulty_bearing",
+   "feature": "accel1__dwt_d4_frac",
+   "weight": 1.5,
+   "note": "accel-1 D4 (1.3-2.6 kHz) share 10x other faults at 15-45 Hz",
+   "by_condition": {
+    "1": {
+     "op": ">=",
+     "lo": 0.11020668464197032,
+     "hi": null,
+     "value": 0.3577712938357575,
+     "neighbour": "broken_rotor_bars",
+     "separation": 2.355072768313098,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    },
+    "2": {
+     "op": ">=",
+     "lo": 0.052056445575574234,
+     "hi": null,
+     "value": 0.2185779155737186,
+     "neighbour": "rotor_misalignment",
+     "separation": 2.869627844574146,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    },
+    "3": {
+     "op": ">=",
+     "lo": 0.036740757399877,
+     "hi": null,
+     "value": 0.0975994966332845,
+     "neighbour": "rotor_misalignment",
+     "separation": 1.953971282510758,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "both",
+   "tier": "confirmed"
+  },
+  "FB_d1": {
+   "fault": "faulty_bearing",
+   "feature": "accel1__dwt_D1_energy_frac",
+   "weight": 1.0,
+   "note": "highest accel-1 D1 (10-21 kHz) share",
+   "by_condition": {
+    "3": {
+     "op": ">=",
+     "lo": 0.001836646204440797,
+     "hi": null,
+     "value": 0.0064970165875117,
+     "neighbour": "broken_rotor_bars",
+     "separation": 2.5268037830430767,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    },
+    "4": {
+     "op": ">=",
+     "lo": 0.00045237810568201633,
+     "hi": null,
+     "value": 0.0032261479136663,
+     "neighbour": "rotor_unbalance",
+     "separation": 3.929051521954155,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    },
+    "6": {
+     "op": ">=",
+     "lo": 0.0009257945703573075,
+     "hi": null,
+     "value": 0.0026943890667045,
+     "neighbour": "bowed_rotor",
+     "separation": 2.1365488049733496,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "both",
+   "tier": "confirmed"
+  },
+  "RM_sk": {
+   "fault": "rotor_misalignment",
+   "feature": "accel1__sk_med_5_20k",
+   "weight": 1.5,
+   "note": "accel-1 SK 5-20 kHz highest at 45 / 60 Hz",
+   "by_condition": {
+    "3": {
+     "op": ">=",
+     "lo": 57.710195182441886,
+     "hi": null,
+     "value": 65.41165371772477,
+     "neighbour": "broken_rotor_bars",
+     "separation": 0.250533166298347,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    },
+    "4": {
+     "op": ">=",
+     "lo": 203.12227178097967,
+     "hi": null,
+     "value": 373.8792962447844,
+     "neighbour": "bowed_rotor",
+     "separation": 1.2202497724970485,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "both",
+   "tier": "confirmed"
+  },
+  "RM_sk_ramp": {
+   "fault": "rotor_misalignment",
+   "feature": "accel1__sk_med_1_5k",
+   "weight": 1.0,
+   "note": "accel-1 SK 1-5 kHz highest in 45->15",
+   "by_condition": {
+    "7": {
+     "op": ">=",
+     "lo": 125.73651503356625,
+     "hi": null,
+     "value": 202.81726379417773,
+     "neighbour": "stator_winding",
+     "separation": 0.9562336567362086,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "both",
+   "tier": "confirmed"
+  },
+  "RM_smooth": {
+   "fault": "rotor_misalignment",
+   "feature": "accel1__dwt_hf_frac",
+   "weight": 1.0,
+   "note": "least accel-1 energy above 2.6 kHz at 30 Hz",
+   "by_condition": {
+    "2": {
+     "op": "<=",
+     "lo": null,
+     "hi": 0.0052619860916631464,
+     "value": 0.0043362335868152,
+     "neighbour": "rotor_unbalance",
+     "separation": 0.3870048105296222,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "both",
+   "tier": "confirmed"
+  },
+  "RM_d1low": {
+   "fault": "rotor_misalignment",
+   "feature": "accel1__dwt_D1_energy_frac",
+   "weight": 1.0,
+   "note": "least accel-1 D1 share at 60 Hz / 60->30",
+   "by_condition": {
+    "4": {
+     "op": "<=",
+     "lo": null,
+     "hi": 2.8827744886062256e-05,
+     "value": 2.2431343556360287e-05,
+     "neighbour": "broken_rotor_bars",
+     "separation": 0.5017580815884664,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    },
+    "8": {
+     "op": "<=",
+     "lo": null,
+     "hi": 9.273316978649615e-05,
+     "value": 6.467029691573442e-05,
+     "neighbour": "rotor_unbalance",
+     "separation": 0.7208484410056357,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "both",
+   "tier": "confirmed"
+  },
+  "RU_var45": {
+   "fault": "rotor_unbalance",
+   "feature": "accel1__stat_variance",
+   "weight": 1.5,
+   "note": "accel-1 variance peaks at 45 Hz",
+   "by_condition": {
+    "3": {
+     "op": ">=",
+     "lo": 937.7666090046654,
+     "hi": null,
+     "value": 1046.4503361566212,
+     "neighbour": "rotor_misalignment",
+     "separation": 0.2193159666349338,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "both",
+   "tier": "confirmed"
+  },
+  "RU_skew45": {
+   "fault": "rotor_unbalance",
+   "feature": "accel1__stat_skewness",
+   "weight": 1.0,
+   "note": "one-sided accel-1 waveform at 45 Hz",
+   "by_condition": {
+    "3": {
+     "op": ">=",
+     "lo": 0.4348649742626753,
+     "hi": null,
+     "value": 0.5610774013409361,
+     "neighbour": "bowed_rotor",
+     "separation": 0.5096465748016503,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "both",
+   "tier": "confirmed"
+  },
+  "RU_1x": {
+   "fault": "rotor_unbalance",
+   "feature": "accel1__h1_amp",
+   "weight": 1.0,
+   "note": "largest accel-1 1x at 60 Hz",
+   "by_condition": {
+    "4": {
+     "op": ">=",
+     "lo": 5.616627493068228,
+     "hi": null,
+     "value": 6.751072600851994,
+     "neighbour": "rotor_misalignment",
+     "separation": 0.3679400050249204,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "both",
+   "tier": "confirmed"
+  },
+  "RU_2x30": {
+   "fault": "rotor_unbalance",
+   "feature": "accel1__h2_amp",
+   "weight": 1.0,
+   "note": "largest accel-1 2x at 30 Hz",
+   "by_condition": {
+    "2": {
+     "op": ">=",
+     "lo": 4.440466242900367,
+     "hi": null,
+     "value": 5.490254136676808,
+     "neighbour": "rotor_misalignment",
+     "separation": 0.4244303293809293,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "both",
+   "tier": "confirmed"
+  },
+  "RU_harm45": {
+   "fault": "rotor_unbalance",
+   "feature": "accel3__fft_harmonic_energy_ratio",
+   "weight": 1.0,
+   "note": "accel-3 energy least concentrated in harmonics at 45 Hz",
+   "by_condition": {
+    "3": {
+     "op": "<=",
+     "lo": null,
+     "hi": 0.5175556841456666,
+     "value": 0.3778933901886633,
+     "neighbour": "stator_winding",
+     "separation": 0.6290100045255873,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "both",
+   "tier": "confirmed"
+  },
+  "RU_d4low": {
+   "fault": "rotor_unbalance",
+   "feature": "accel1__dwt_d4_frac",
+   "weight": 0.5,
+   "note": "lowest accel-1 D4 share at 30 Hz",
+   "by_condition": {
+    "2": {
+     "op": "<=",
+     "lo": null,
+     "hi": 0.0051878611399155,
+     "value": 0.0043088053276902,
+     "neighbour": "bowed_rotor",
+     "separation": 0.3713216418500842,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "both",
+   "tier": "confirmed"
+  },
+  "RU_lowsk": {
+   "fault": "rotor_unbalance",
+   "feature": "accel1__sk_frac_gt50",
+   "weight": 0.5,
+   "note": "least impulsive accel-1 (SK > 50 rarely)",
+   "by_condition": {
+    "1": {
+     "op": "<=",
+     "lo": null,
+     "hi": 0.0015384615384615,
+     "value": 0.0,
+     "neighbour": "bowed_rotor",
+     "separation": 0.4999999999999919,
+     "log_scale": false,
+     "usable": true,
+     "floor": null
+    },
+    "2": {
+     "op": "between",
+     "lo": 0.001025641025641,
+     "hi": 0.039999999999999945,
+     "value": 0.002051282051282,
+     "neighbour": "broken_rotor_bars",
+     "separation": 0.0032948929159801487,
+     "log_scale": false,
+     "usable": false,
+     "floor": null
+    }
+   },
+   "group": "both",
+   "tier": "confirmed"
+  },
+  "BR_a2_1x": {
+   "fault": "bowed_rotor",
+   "feature": "accel2__h1_amp",
+   "weight": 0.75,
+   "note": "largest accel-2 1x at 30 Hz",
+   "by_condition": {
+    "2": {
+     "op": ">=",
+     "lo": 0.28850579588345093,
+     "hi": null,
+     "value": 0.3097064134383744,
+     "neighbour": "rotor_unbalance",
+     "separation": 0.14181923970492782,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "both",
+   "tier": "candidate"
+  },
+  "BR_skew": {
+   "fault": "bowed_rotor",
+   "feature": "accel1__stat_skewness",
+   "weight": 0.75,
+   "note": "most one-sided accel-1 at 60 Hz",
+   "by_condition": {
+    "4": {
+     "op": ">=",
+     "lo": 0.26510157194284967,
+     "hi": null,
+     "value": 0.3087512423120409,
+     "neighbour": "faulty_bearing",
+     "separation": 0.13359495374662847,
+     "log_scale": false,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "both",
+   "tier": "candidate"
+  },
+  "BR_sk60": {
+   "fault": "bowed_rotor",
+   "feature": "accel1__sk_med_1_5k",
+   "weight": 0.75,
+   "note": "accel-1 SK 1-5 kHz highest at 60 Hz",
+   "by_condition": {
+    "4": {
+     "op": ">=",
+     "lo": 48.60603494999957,
+     "hi": null,
+     "value": 123.33944039751148,
+     "neighbour": "rotor_misalignment",
+     "separation": 1.8623850667153077,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "both",
+   "tier": "candidate"
+  },
+  "BR_kurt15": {
+   "fault": "bowed_rotor",
+   "feature": "accel1__stat_kurtosis",
+   "weight": 0.5,
+   "note": "highest accel-1 kurtosis at 15 Hz",
+   "by_condition": {
+    "1": {
+     "op": ">=",
+     "lo": 0.4399528083845945,
+     "hi": null,
+     "value": 0.549481765608141,
+     "neighbour": "stator_winding",
+     "separation": 0.22673349025295253,
+     "log_scale": false,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "both",
+   "tier": "candidate"
+  },
+  "BR_hump": {
+   "fault": "bowed_rotor",
+   "feature": "accel2__env_width75_frac",
+   "weight": 0.5,
+   "note": "narrowest accel-2 resonance burst in 15->45",
+   "by_condition": {
+    "5": {
+     "op": "<=",
+     "lo": null,
+     "hi": 0.14916342813734307,
+     "value": 0.1208791208791208,
+     "neighbour": "rotor_misalignment",
+     "separation": 0.4205029854727049,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "both",
+   "tier": "candidate"
+  },
+  "KA_low1x_mic": {
+   "fault": "broken_rotor_bars",
+   "feature": "mic__h1_amp",
+   "weight": 0.75,
+   "note": "smallest 1x in the sound at 45 / 60 Hz",
+   "by_condition": {
+    "3": {
+     "op": "<=",
+     "lo": null,
+     "hi": 0.044472067223359155,
+     "value": 0.030488508527767,
+     "neighbour": "rotor_unbalance",
+     "separation": 0.755022892403916,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    },
+    "4": {
+     "op": "<=",
+     "lo": null,
+     "hi": 0.09206325744064678,
+     "value": 0.062497998166838,
+     "neighbour": "faulty_bearing",
+     "separation": 0.7746827895027806,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "both",
+   "tier": "candidate"
+  },
+  "KA_low1x_a2": {
+   "fault": "broken_rotor_bars",
+   "feature": "accel2__h1_amp",
+   "weight": 0.5,
+   "note": "smallest accel-2 1x at 60 Hz",
+   "by_condition": {
+    "4": {
+     "op": "<=",
+     "lo": null,
+     "hi": 1.1075585648576716,
+     "value": 0.897819435910069,
+     "neighbour": "stator_winding",
+     "separation": 0.4198888125329051,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "both",
+   "tier": "candidate"
+  },
+  "KA_low1x_a3": {
+   "fault": "broken_rotor_bars",
+   "feature": "accel3__h1_amp",
+   "weight": 0.5,
+   "note": "smallest accel-3 1x at 45 / 60 Hz",
+   "by_condition": {
+    "3": {
+     "op": "<=",
+     "lo": null,
+     "hi": 0.22803067744056707,
+     "value": 0.182886309859155,
+     "neighbour": "stator_winding",
+     "separation": 0.44123093580119077,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    },
+    "4": {
+     "op": "<=",
+     "lo": null,
+     "hi": 0.4397964494215057,
+     "value": 0.3789215961916696,
+     "neighbour": "stator_winding",
+     "separation": 0.297965382893433,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "both",
+   "tier": "candidate"
+  },
+  "KA_a3var60": {
+   "fault": "broken_rotor_bars",
+   "feature": "accel3__stat_variance",
+   "weight": 0.75,
+   "note": "largest accel-3 variance at 60 Hz",
+   "by_condition": {
+    "4": {
+     "op": ">=",
+     "lo": 233.5067028751383,
+     "hi": null,
+     "value": 263.3343251713456,
+     "neighbour": "rotor_unbalance",
+     "separation": 0.24042728091802612,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "both",
+   "tier": "candidate"
+  },
+  "KA_a2pk60": {
+   "fault": "broken_rotor_bars",
+   "feature": "accel2__stat_peak",
+   "weight": 0.5,
+   "note": "largest accel-2 peak at 60 Hz",
+   "by_condition": {
+    "4": {
+     "op": ">=",
+     "lo": 65.48437150876512,
+     "hi": null,
+     "value": 76.870027,
+     "neighbour": "rotor_unbalance",
+     "separation": 0.3206090467039031,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "both",
+   "tier": "candidate"
+  },
+  "SW_kurt8": {
+   "fault": "stator_winding",
+   "feature": "accel1__stat_kurtosis",
+   "weight": 0.75,
+   "note": "highest accel-1 kurtosis in 60->30",
+   "by_condition": {
+    "8": {
+     "op": ">=",
+     "lo": 0.5200508530387281,
+     "hi": null,
+     "value": 0.5892621904225255,
+     "neighbour": "bowed_rotor",
+     "separation": 0.2498892570690342,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "both",
+   "tier": "candidate"
+  },
+  "SW_a3pk8": {
+   "fault": "stator_winding",
+   "feature": "accel3__stat_peak",
+   "weight": 0.75,
+   "note": "lowest accel-3 peak in 60->30",
+   "by_condition": {
+    "8": {
+     "op": "<=",
+     "lo": null,
+     "hi": 73.18744890381686,
+     "value": 63.212407,
+     "neighbour": "bowed_rotor",
+     "separation": 0.2930466960523299,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "both",
+   "tier": "candidate"
+  },
+  "SW_lowvar45": {
+   "fault": "stator_winding",
+   "feature": "accel1__stat_variance",
+   "weight": 0.5,
+   "note": "smallest accel-1 variance at 45 Hz",
+   "by_condition": {
+    "3": {
+     "op": "<=",
+     "lo": null,
+     "hi": 425.32504288608686,
+     "value": 379.38696479102543,
+     "neighbour": "broken_rotor_bars",
+     "separation": 0.22859396783786323,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "both",
+   "tier": "candidate"
+  },
+  "SW_a2var45": {
+   "fault": "stator_winding",
+   "feature": "accel2__stat_variance",
+   "weight": 0.5,
+   "note": "smallest accel-2 variance at 45 Hz",
+   "by_condition": {
+    "3": {
+     "op": "<=",
+     "lo": null,
+     "hi": 79.97653229815926,
+     "value": 73.6587197059944,
+     "neighbour": "broken_rotor_bars",
+     "separation": 0.16458143126032532,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "both",
+   "tier": "candidate"
+  },
+  "SW_start": {
+   "fault": "stator_winding",
+   "feature": "accel3__env_start_over_peak",
+   "weight": 0.5,
+   "note": "accel-3 strongest at the start of 15->45",
+   "by_condition": {
+    "5": {
+     "op": ">=",
+     "lo": 0.2916366424039908,
+     "hi": null,
+     "value": 0.3429819721220104,
+     "neighbour": "bowed_rotor",
+     "separation": 0.324338468623973,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "both",
+   "tier": "candidate"
+  },
+  "L_BR_a1hf15": {
+   "fault": "bowed_rotor",
+   "feature": "accel1__psd_frac_10000_20833",
+   "weight": 0.75,
+   "note": "most accel-1 power above 10 kHz at 15 Hz",
+   "by_condition": {
+    "1": {
+     "op": ">=",
+     "lo": 0.026336648455623043,
+     "hi": null,
+     "value": 0.0458286042153146,
+     "neighbour": "rotor_unbalance",
+     "separation": 1.1078939915260815,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "loaded",
+   "tier": "loaded-only"
+  },
+  "L_BR_a1_1x30": {
+   "fault": "bowed_rotor",
+   "feature": "accel1__h1_amp",
+   "weight": 0.75,
+   "note": "smallest accel-1 1x at 30 Hz",
+   "by_condition": {
+    "2": {
+     "op": "<=",
+     "lo": null,
+     "hi": 0.18418117735109113,
+     "value": 0.0877275093328719,
+     "neighbour": "stator_winding",
+     "separation": 1.4833688141419472,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "loaded",
+   "tier": "loaded-only"
+  },
+  "L_BR_a1d3_45": {
+   "fault": "bowed_rotor",
+   "feature": "accel1__dwt_D3_energy_frac",
+   "weight": 0.5,
+   "note": "least accel-1 energy in 2.6-5.2 kHz at 45 Hz",
+   "by_condition": {
+    "3": {
+     "op": "<=",
+     "lo": null,
+     "hi": 0.0006153367325621004,
+     "value": 0.0004326626007107,
+     "neighbour": "rotor_unbalance",
+     "separation": 0.7044228789353069,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "loaded",
+   "tier": "loaded-only"
+  },
+  "L_BR_mic2x60": {
+   "fault": "bowed_rotor",
+   "feature": "mic__h2_amp",
+   "weight": 0.5,
+   "note": "smallest 2x in the sound at 60 Hz",
+   "by_condition": {
+    "4": {
+     "op": "<=",
+     "lo": null,
+     "hi": 0.0572920703670222,
+     "value": 0.0400142296052744,
+     "neighbour": "stator_winding",
+     "separation": 0.7178541902976558,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "loaded",
+   "tier": "loaded-only"
+  },
+  "L_BR_micvar": {
+   "fault": "bowed_rotor",
+   "feature": "mic__stat_variance",
+   "weight": 0.75,
+   "note": "quietest microphone in both 15<->45 ramps",
+   "by_condition": {
+    "5": {
+     "op": "<=",
+     "lo": null,
+     "hi": 0.14573749429731647,
+     "value": 0.0857067080696561,
+     "neighbour": "faulty_bearing",
+     "separation": 1.0617518454615729,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    },
+    "7": {
+     "op": "<=",
+     "lo": null,
+     "hi": 0.1634784494903558,
+     "value": 0.1024652468234317,
+     "neighbour": "faulty_bearing",
+     "separation": 0.9343149770929537,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "loaded",
+   "tier": "loaded-only"
+  },
+  "L_BR_mic25k": {
+   "fault": "bowed_rotor",
+   "feature": "mic__psd_frac_2000_5000",
+   "weight": 0.5,
+   "note": "most sound power in 2-5 kHz in both 15<->45 ramps",
+   "by_condition": {
+    "5": {
+     "op": ">=",
+     "lo": 0.000817450770172869,
+     "hi": null,
+     "value": 0.00108938770285,
+     "neighbour": "faulty_bearing",
+     "separation": 0.5743607917944127,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    },
+    "7": {
+     "op": ">=",
+     "lo": 0.0007337370905829752,
+     "hi": null,
+     "value": 0.0009344822176054,
+     "neighbour": "faulty_bearing",
+     "separation": 0.4836836414028056,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "loaded",
+   "tier": "loaded-only"
+  },
+  "L_BR_micskew": {
+   "fault": "bowed_rotor",
+   "feature": "mic__stat_skewness",
+   "weight": 0.5,
+   "note": "most one-sided sound in both 30<->60 ramps",
+   "by_condition": {
+    "6": {
+     "op": ">=",
+     "lo": -0.14026936308627286,
+     "hi": null,
+     "value": -0.0368635006259036,
+     "neighbour": "broken_rotor_bars",
+     "separation": 0.4499683256483851,
+     "log_scale": false,
+     "usable": true,
+     "floor": null
+    },
+    "8": {
+     "op": ">=",
+     "lo": -0.0914582763744763,
+     "hi": null,
+     "value": -0.0396514249705393,
+     "neighbour": "stator_winding",
+     "separation": 0.27221278519218217,
+     "log_scale": false,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "loaded",
+   "tier": "loaded-only"
+  },
+  "L_FB_skrise": {
+   "fault": "faulty_bearing",
+   "feature": "accel1__sk_rise_ratio",
+   "weight": 0.5,
+   "note": "accel-1 SK rises most above 10 kHz at 15 Hz",
+   "by_condition": {
+    "1": {
+     "op": ">=",
+     "lo": 1.4200976505839034,
+     "hi": null,
+     "value": 2.091847184393556,
+     "neighbour": "stator_winding",
+     "separation": 0.7746437173119112,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "loaded",
+   "tier": "loaded-only"
+  },
+  "L_FB_mic510": {
+   "fault": "faulty_bearing",
+   "feature": "mic__psd_frac_5000_10000",
+   "weight": 0.75,
+   "note": "most sound power in 5-10 kHz at 30 / 60 Hz",
+   "by_condition": {
+    "2": {
+     "op": ">=",
+     "lo": 0.00018352660773968173,
+     "hi": null,
+     "value": 0.0003405247184065,
+     "neighbour": "rotor_misalignment",
+     "separation": 1.2362561182093188,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    },
+    "4": {
+     "op": ">=",
+     "lo": 0.0027512714729762172,
+     "hi": null,
+     "value": 0.0039366180178407,
+     "neighbour": "broken_rotor_bars",
+     "separation": 0.7165176499131309,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "loaded",
+   "tier": "loaded-only"
+  },
+  "L_FB_michf": {
+   "fault": "faulty_bearing",
+   "feature": "mic__dwt_hf_frac",
+   "weight": 0.5,
+   "note": "most sound energy above 2.6 kHz at 45 Hz",
+   "by_condition": {
+    "3": {
+     "op": ">=",
+     "lo": 0.007471785385005919,
+     "hi": null,
+     "value": 0.0106245558691261,
+     "neighbour": "rotor_unbalance",
+     "separation": 0.7040678708667647,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "loaded",
+   "tier": "loaded-only"
+  },
+  "L_FB_a1d3": {
+   "fault": "faulty_bearing",
+   "feature": "accel1__dwt_D3_energy_frac",
+   "weight": 0.75,
+   "note": "most accel-1 energy in 2.6-5.2 kHz in both 30<->60 ramps",
+   "by_condition": {
+    "6": {
+     "op": ">=",
+     "lo": 0.0036523785448063454,
+     "hi": null,
+     "value": 0.0050752472912099,
+     "neighbour": "rotor_misalignment",
+     "separation": 0.6579932792052618,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    },
+    "8": {
+     "op": ">=",
+     "lo": 0.003551721559062825,
+     "hi": null,
+     "value": 0.0055130338415513,
+     "neighbour": "rotor_misalignment",
+     "separation": 0.8793652918701209,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "loaded",
+   "tier": "loaded-only"
+  },
+  "L_KA_a2skew": {
+   "fault": "broken_rotor_bars",
+   "feature": "accel2__stat_skewness",
+   "weight": 0.5,
+   "note": "most one-sided accel-2 at 30 Hz and 30->60",
+   "by_condition": {
+    "2": {
+     "op": ">=",
+     "lo": -0.0729651039985472,
+     "hi": null,
+     "value": 0.0521552179667382,
+     "neighbour": "stator_winding",
+     "separation": 0.38743237261744573,
+     "log_scale": false,
+     "usable": true,
+     "floor": null
+    },
+    "6": {
+     "op": ">=",
+     "lo": -0.17367389272447925,
+     "hi": null,
+     "value": -0.0233863437116772,
+     "neighbour": "rotor_unbalance",
+     "separation": 0.3884952546144342,
+     "log_scale": false,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "loaded",
+   "tier": "loaded-only"
+  },
+  "L_KA_a3d1": {
+   "fault": "broken_rotor_bars",
+   "feature": "accel3__dwt_D1_energy_frac",
+   "weight": 0.5,
+   "note": "most accel-3 energy above 10 kHz at 45 Hz",
+   "by_condition": {
+    "3": {
+     "op": ">=",
+     "lo": 0.08444083806698899,
+     "hi": null,
+     "value": 0.1050632711836578,
+     "neighbour": "stator_winding",
+     "separation": 0.4370232068964679,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "loaded",
+   "tier": "loaded-only"
+  },
+  "L_KA_a2_12k": {
+   "fault": "broken_rotor_bars",
+   "feature": "accel2__psd_frac_1000_2000",
+   "weight": 0.75,
+   "note": "most accel-2 power in 1-2 kHz at 60 Hz",
+   "by_condition": {
+    "4": {
+     "op": ">=",
+     "lo": 0.05779176820905638,
+     "hi": null,
+     "value": 0.0829945265723558,
+     "neighbour": "rotor_unbalance",
+     "separation": 0.7238566274066938,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "loaded",
+   "tier": "loaded-only"
+  },
+  "L_KA_a1skew": {
+   "fault": "broken_rotor_bars",
+   "feature": "accel1__stat_skewness",
+   "weight": 0.5,
+   "note": "least one-sided accel-1 in 30->60",
+   "by_condition": {
+    "6": {
+     "op": "<=",
+     "lo": null,
+     "hi": 0.34058225675880843,
+     "value": 0.2263200028381117,
+     "neighbour": "rotor_misalignment",
+     "separation": 0.8174134665305693,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "loaded",
+   "tier": "loaded-only"
+  },
+  "L_KA_micskew": {
+   "fault": "broken_rotor_bars",
+   "feature": "mic__stat_skewness",
+   "weight": 0.5,
+   "note": "most negative sound skewness at 45 Hz",
+   "by_condition": {
+    "3": {
+     "op": "<=",
+     "lo": null,
+     "hi": -0.4635133707832586,
+     "value": -0.7139161831982859,
+     "neighbour": "rotor_unbalance",
+     "separation": 0.44490486386544925,
+     "log_scale": false,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "loaded",
+   "tier": "loaded-only"
+  },
+  "L_RM_mic05": {
+   "fault": "rotor_misalignment",
+   "feature": "mic__psd_frac_500_1000",
+   "weight": 0.75,
+   "note": "most sound power in 0.5-1 kHz at 30 Hz",
+   "by_condition": {
+    "2": {
+     "op": ">=",
+     "lo": 0.019324914206506092,
+     "hi": null,
+     "value": 0.0273858497082694,
+     "neighbour": "rotor_unbalance",
+     "separation": 0.697262582071501,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "loaded",
+   "tier": "loaded-only"
+  },
+  "L_RM_a1_05": {
+   "fault": "rotor_misalignment",
+   "feature": "accel1__psd_frac_500_1000",
+   "weight": 0.5,
+   "note": "most accel-1 power in 0.5-1 kHz at 45 Hz",
+   "by_condition": {
+    "3": {
+     "op": ">=",
+     "lo": 0.09043450694932656,
+     "hi": null,
+     "value": 0.1187836217186291,
+     "neighbour": "rotor_unbalance",
+     "separation": 0.545355248995997,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "loaded",
+   "tier": "loaded-only"
+  },
+  "L_RM_micharm": {
+   "fault": "rotor_misalignment",
+   "feature": "mic__fft_harmonic_energy_ratio",
+   "weight": 0.5,
+   "note": "sound least concentrated in harmonics at 60 Hz",
+   "by_condition": {
+    "4": {
+     "op": "<=",
+     "lo": null,
+     "hi": 0.5211628627428002,
+     "value": 0.4038301214255398,
+     "neighbour": "stator_winding",
+     "separation": 0.5101365826634784,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "loaded",
+   "tier": "loaded-only"
+  },
+  "L_RM_crest": {
+   "fault": "rotor_misalignment",
+   "feature": "accel1__stat_crest_factor",
+   "weight": 1.0,
+   "note": "peakiest accel-1 in both 15<->45 ramps",
+   "by_condition": {
+    "5": {
+     "op": ">=",
+     "lo": 9.52496324959478,
+     "hi": null,
+     "value": 16.720222576203664,
+     "neighbour": "rotor_unbalance",
+     "separation": 1.1254057136935864,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    },
+    "7": {
+     "op": ">=",
+     "lo": 11.06966530194512,
+     "hi": null,
+     "value": 20.430516158393065,
+     "neighbour": "rotor_unbalance",
+     "separation": 1.2256423233364409,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "loaded",
+   "tier": "loaded-only"
+  },
+  "L_RM_a1kurt": {
+   "fault": "rotor_misalignment",
+   "feature": "accel1__stat_kurtosis",
+   "weight": 0.5,
+   "note": "spikiest accel-1 in 15->45",
+   "by_condition": {
+    "5": {
+     "op": ">=",
+     "lo": 4.583735473772023,
+     "hi": null,
+     "value": 11.923828003423862,
+     "neighbour": "rotor_unbalance",
+     "separation": 1.912048959963176,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "loaded",
+   "tier": "loaded-only"
+  },
+  "L_RM_a2kurt": {
+   "fault": "rotor_misalignment",
+   "feature": "accel2__stat_kurtosis",
+   "weight": 0.5,
+   "note": "spikiest accel-2 in both 30<->60 ramps",
+   "by_condition": {
+    "6": {
+     "op": ">=",
+     "lo": 2.3341065743223304,
+     "hi": null,
+     "value": 2.677439557114784,
+     "neighbour": "faulty_bearing",
+     "separation": 0.27446350845223144,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    },
+    "8": {
+     "op": ">=",
+     "lo": 2.3073149439601286,
+     "hi": null,
+     "value": 2.5499413291679325,
+     "neighbour": "faulty_bearing",
+     "separation": 0.19997172838216737,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "loaded",
+   "tier": "loaded-only"
+  },
+  "L_RU_a2_1x15": {
+   "fault": "rotor_unbalance",
+   "feature": "accel2__h1_amp",
+   "weight": 0.5,
+   "note": "largest accel-2 1x at 15 Hz",
+   "by_condition": {
+    "1": {
+     "op": ">=",
+     "lo": 0.014602711204701323,
+     "hi": null,
+     "value": 0.0190961264792244,
+     "neighbour": "faulty_bearing",
+     "separation": 0.5365566038481644,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "loaded",
+   "tier": "loaded-only"
+  },
+  "L_RU_a3skew": {
+   "fault": "rotor_unbalance",
+   "feature": "accel3__stat_skewness",
+   "weight": 0.5,
+   "note": "accel-3 skewness extreme at 30 (low) / 45 Hz (high)",
+   "by_condition": {
+    "2": {
+     "op": "<=",
+     "lo": null,
+     "hi": -0.5475440482236968,
+     "value": -0.7574111838978661,
+     "neighbour": "rotor_misalignment",
+     "separation": 0.5611539176304734,
+     "log_scale": false,
+     "usable": true,
+     "floor": null
+    },
+    "3": {
+     "op": ">=",
+     "lo": 0.0728991598370746,
+     "hi": null,
+     "value": 0.165207342633445,
+     "neighbour": "bowed_rotor",
+     "separation": 0.5032804306987672,
+     "log_scale": false,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "loaded",
+   "tier": "loaded-only"
+  },
+  "L_RU_a2skpk": {
+   "fault": "rotor_unbalance",
+   "feature": "accel2__sk_peak_value",
+   "weight": 0.75,
+   "note": "highest accel-2 SK peak at 60 Hz",
+   "by_condition": {
+    "4": {
+     "op": ">=",
+     "lo": 91.69593682309973,
+     "hi": null,
+     "value": 142.26885775110603,
+     "neighbour": "broken_rotor_bars",
+     "separation": 0.878481126126788,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "loaded",
+   "tier": "loaded-only"
+  },
+  "L_RU_a3kurt": {
+   "fault": "rotor_unbalance",
+   "feature": "accel3__stat_kurtosis",
+   "weight": 0.5,
+   "note": "spikiest accel-3 at 60 Hz",
+   "by_condition": {
+    "4": {
+     "op": ">=",
+     "lo": 0.31640667392367083,
+     "hi": null,
+     "value": 0.630076469868825,
+     "neighbour": "broken_rotor_bars",
+     "separation": 0.6085410366583647,
+     "log_scale": false,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "loaded",
+   "tier": "loaded-only"
+  },
+  "L_RU_a1hf": {
+   "fault": "rotor_unbalance",
+   "feature": "accel1__dwt_hf_frac",
+   "weight": 0.75,
+   "note": "least accel-1 energy above 2.6 kHz in 45->15",
+   "by_condition": {
+    "7": {
+     "op": "<=",
+     "lo": null,
+     "hi": 0.005426720394487569,
+     "value": 0.0042732135546349,
+     "neighbour": "bowed_rotor",
+     "separation": 0.4779376789327836,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "loaded",
+   "tier": "loaded-only"
+  },
+  "L_RU_micsk": {
+   "fault": "rotor_unbalance",
+   "feature": "mic__sk_med_5_20k",
+   "weight": 0.5,
+   "note": "least impulsive sound above 5 kHz in both 30<->60 ramps",
+   "by_condition": {
+    "6": {
+     "op": "<=",
+     "lo": null,
+     "hi": 31.00155189892769,
+     "value": 26.569439636218263,
+     "neighbour": "faulty_bearing",
+     "separation": 0.3085511900638722,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    },
+    "8": {
+     "op": "<=",
+     "lo": null,
+     "hi": 27.0613035367546,
+     "value": 20.89976873504689,
+     "neighbour": "faulty_bearing",
+     "separation": 0.5167334001431829,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "loaded",
+   "tier": "loaded-only"
+  },
+  "L_SW_mic05": {
+   "fault": "stator_winding",
+   "feature": "mic__psd_frac_500_1000",
+   "weight": 1.0,
+   "note": "sound power in 0.5-1 kHz: highest at 15 Hz, lowest at 30 Hz and in 15<->45",
+   "by_condition": {
+    "1": {
+     "op": ">=",
+     "lo": 0.00721349348271727,
+     "hi": null,
+     "value": 0.0151515881481201,
+     "neighbour": "broken_rotor_bars",
+     "separation": 1.4843039756017502,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    },
+    "2": {
+     "op": "<=",
+     "lo": null,
+     "hi": 0.006028629199982411,
+     "value": 0.0039733782010432,
+     "neighbour": "bowed_rotor",
+     "separation": 0.8338059795240227,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    },
+    "5": {
+     "op": "<=",
+     "lo": null,
+     "hi": 0.003510718189236768,
+     "value": 0.00293295569015,
+     "neighbour": "rotor_misalignment",
+     "separation": 0.35961989266385075,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    },
+    "7": {
+     "op": "<=",
+     "lo": null,
+     "hi": 0.003284812990872896,
+     "value": 0.0026588564248866,
+     "neighbour": "rotor_misalignment",
+     "separation": 0.42282721444363514,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "loaded",
+   "tier": "loaded-only"
+  },
+  "L_SW_mic510": {
+   "fault": "stator_winding",
+   "feature": "mic__psd_frac_5000_10000",
+   "weight": 0.5,
+   "note": "sound power in 5-10 kHz extreme at 15 (high) / 45 Hz (low)",
+   "by_condition": {
+    "1": {
+     "op": ">=",
+     "lo": 0.00017549468815493969,
+     "hi": null,
+     "value": 0.0003067270744676,
+     "neighbour": "faulty_bearing",
+     "separation": 1.1166991368233905,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    },
+    "3": {
+     "op": "<=",
+     "lo": null,
+     "hi": 0.0002448661530570143,
+     "value": 0.000143263394127,
+     "neighbour": "bowed_rotor",
+     "separation": 1.0720537884496686,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "loaded",
+   "tier": "loaded-only"
+  },
+  "L_SW_a1_25k": {
+   "fault": "stator_winding",
+   "feature": "accel1__psd_frac_2000_5000",
+   "weight": 0.5,
+   "note": "least accel-1 power in 2-5 kHz at 60 Hz",
+   "by_condition": {
+    "4": {
+     "op": "<=",
+     "lo": null,
+     "hi": 0.0003793746827253745,
+     "value": 0.0002689756125411,
+     "neighbour": "bowed_rotor",
+     "separation": 0.6878072194223854,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "loaded",
+   "tier": "loaded-only"
+  },
+  "L_SW_mickurt": {
+   "fault": "stator_winding",
+   "feature": "mic__stat_kurtosis",
+   "weight": 0.75,
+   "note": "least spiky sound in 30->60",
+   "by_condition": {
+    "6": {
+     "op": "<=",
+     "lo": null,
+     "hi": 0.08182964822118216,
+     "value": 0.0331068108416556,
+     "neighbour": "broken_rotor_bars",
+     "separation": 1.8098011976140176,
+     "log_scale": true,
+     "usable": true,
+     "floor": null
+    }
+   },
+   "group": "loaded",
+   "tier": "loaded-only"
+  }
+ },
+ "healthy_reference": {
+  "1": {
+   "accel1__stat_variance": 2.673703918719816,
+   "mic__stat_variance": 0.0011293433904603,
+   "temp__temp_mean": 27.21510396679048
+  },
+  "2": {
+   "accel1__stat_variance": 10.346763158785206,
+   "mic__stat_variance": 0.0038510515561889,
+   "temp__temp_mean": 27.029058201121437
+  },
+  "3": {
+   "accel1__stat_variance": 41.19892276426258,
+   "mic__stat_variance": 0.0087559509455946,
+   "temp__temp_mean": 26.90639011684762
+  },
+  "4": {
+   "accel1__stat_variance": 74.69661860717862,
+   "mic__stat_variance": 0.0115932820842963,
+   "temp__temp_mean": 26.85535319978572
+  },
+  "5": {
+   "accel1__stat_variance": 20.141230516477247,
+   "mic__stat_variance": 0.0163434086249735,
+   "temp__temp_mean": 27.843128495361903
+  },
+  "6": {
+   "accel1__stat_variance": 51.29838291760261,
+   "mic__stat_variance": 0.035833363182008,
+   "temp__temp_mean": 26.91764976203333
+  },
+  "7": {
+   "accel1__stat_variance": 17.68068350628395,
+   "mic__stat_variance": 0.0102098405902266,
+   "temp__temp_mean": 27.86796569422381
+  },
+  "8": {
+   "accel1__stat_variance": 51.10583546053292,
+   "mic__stat_variance": 0.0348451704767309,
+   "temp__temp_mean": 26.863580488159524
+  }
+ }
+}

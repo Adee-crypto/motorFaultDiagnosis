@@ -1,0 +1,40 @@
+
+######## UNLOADED: 41 hand triggers, 24 ML triggers
+-- fit half A / test half B + reverse ramps
+   hand: per-run 75%, motors 7/7   ml: per-run 75%, motors 7/7   both: per-run 95%, motors 7/7
+   HH    hand -> HH    0.00 (2nd 0.00)   ml   -> HH    0.00 (2nd 0.00)   both -> HH    0.00 (2nd 0.00)
+   BR    hand -> BR    6.50 (2nd 0.00)   ml   -> BR    4.50 (2nd 0.00)   both -> BR   11.00 (2nd 0.00)
+   FB    hand -> FB   18.00 (2nd 0.00)   ml   -> FB    8.00 (2nd 0.00)   both -> FB   26.00 (2nd 0.00)
+   KA    hand -> KA   11.75 (2nd 1.50)   ml   -> KA    2.50 (2nd 0.00)   both -> KA   14.25 (2nd 1.50)
+   RM    hand -> RM    9.00 (2nd 0.00)   ml   -> RM    4.00 (2nd 0.00)   both -> RM   13.00 (2nd 0.00)
+   RU    hand -> RU    8.00 (2nd 1.00)   ml   -> RU    2.50 (2nd 0.50)   both -> RU   10.50 (2nd 1.00)
+   SW    hand -> SW   11.50 (2nd 1.50)   ml   -> SW    5.00 (2nd 0.50)   both -> SW   16.50 (2nd 1.50)
+-- fit half B / test half A + reverse ramps
+   hand: per-run 73%, motors 7/7   ml: per-run 75%, motors 7/7   both: per-run 95%, motors 7/7
+   HH    hand -> HH    0.00 (2nd 0.00)   ml   -> HH    0.00 (2nd 0.00)   both -> HH    0.00 (2nd 0.00)
+   BR    hand -> BR    6.50 (2nd 1.50)   ml   -> BR    4.50 (2nd 0.00)   both -> BR   11.00 (2nd 1.50)
+   FB    hand -> FB   18.00 (2nd 0.50)   ml   -> FB    7.50 (2nd 0.50)   both -> FB   25.50 (2nd 0.50)
+   KA    hand -> KA   11.75 (2nd 1.50)   ml   -> KA    2.50 (2nd 0.50)   both -> KA   14.25 (2nd 1.50)
+   RM    hand -> RM    7.50 (2nd 0.50)   ml   -> RM    4.00 (2nd 0.00)   both -> RM   11.50 (2nd 0.50)
+   RU    hand -> RU    8.00 (2nd 1.00)   ml   -> RU    2.50 (2nd 0.00)   both -> RU   10.50 (2nd 1.00)
+   SW    hand -> SW   11.50 (2nd 1.50)   ml   -> SW    5.50 (2nd 0.50)   both -> SW   17.00 (2nd 1.50)
+
+######## LOADED: 61 hand triggers, 24 ML triggers
+-- fit half A / test half B + reverse ramps
+   hand: per-run 86%, motors 7/7   ml: per-run 54%, motors 7/7   both: per-run 86%, motors 7/7
+   HH    hand -> HH    0.00 (2nd 0.00)   ml   -> HH    0.00 (2nd 0.00)   both -> HH    0.00 (2nd 0.00)
+   BR    hand -> BR    8.75 (2nd 0.00)   ml   -> BR    2.50 (2nd 0.00)   both -> BR   11.25 (2nd 0.00)
+   FB    hand -> FB   22.00 (2nd 0.00)   ml   -> FB   11.00 (2nd 0.00)   both -> FB   33.00 (2nd 0.00)
+   KA    hand -> KA    7.00 (2nd 0.00)   ml   -> KA    3.00 (2nd 0.00)   both -> KA   10.00 (2nd 0.00)
+   RM    hand -> RM    8.25 (2nd 0.00)   ml   -> RM    4.00 (2nd 0.00)   both -> RM   12.25 (2nd 0.00)
+   RU    hand -> RU   10.25 (2nd 0.00)   ml   -> RU    0.50 (2nd 0.00)   both -> RU   10.75 (2nd 0.00)
+   SW    hand -> SW    7.25 (2nd 0.00)   ml   -> SW    1.00 (2nd 0.00)   both -> SW    8.25 (2nd 0.00)
+-- fit half B / test half A + reverse ramps
+   hand: per-run 86%, motors 7/7   ml: per-run 54%, motors 7/7   both: per-run 86%, motors 7/7
+   HH    hand -> HH    0.00 (2nd 0.00)   ml   -> HH    0.00 (2nd 0.00)   both -> HH    0.00 (2nd 0.00)
+   BR    hand -> BR    8.00 (2nd 0.00)   ml   -> BR    2.50 (2nd 0.00)   both -> BR   10.50 (2nd 0.00)
+   FB    hand -> FB   22.00 (2nd 0.00)   ml   -> FB   11.00 (2nd 0.00)   both -> FB   33.00 (2nd 0.00)
+   KA    hand -> KA    7.00 (2nd 0.00)   ml   -> KA    3.00 (2nd 0.00)   both -> KA   10.00 (2nd 0.00)
+   RM    hand -> RM    8.25 (2nd 0.00)   ml   -> RM    4.00 (2nd 0.00)   both -> RM   12.25 (2nd 0.00)
+   RU    hand -> RU   10.25 (2nd 0.00)   ml   -> RU    0.50 (2nd 0.00)   both -> RU   10.75 (2nd 0.00)
+   SW    hand -> SW    7.25 (2nd 0.00)   ml   -> SW    1.00 (2nd 0.00)   both -> SW    8.25 (2nd 0.00)

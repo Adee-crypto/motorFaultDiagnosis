@@ -1,0 +1,44 @@
+load,fault,trigger,feature,meaning,relation,speeds,status
+0,bowed_rotor,ML0_BR_P00,xch__accel3_mic__sk_rise_ratio,sk_rise_ratio: accel3 / mic ratio vs healthy,new idea,"[5, 6, 7, 8]",kept (unique)
+0,bowed_rotor,ML0_BR_S04,xch__accel2_accel3__psd_frac_2000_5000,psd_frac_2000_5000: accel2 / accel3 ratio vs healthy,new idea,"[3, 5]",kept (unique)
+0,bowed_rotor,ML0_BR_S05,xch__accel1_mic__sk_peak_value,sk_peak_value: accel1 / mic ratio vs healthy,new idea,"[6, 8]",dropped: repeats ML0_BR_P00
+0,bowed_rotor,ML0_BR_S06,xch__accel3_mic__psd_frac_1000_2000,psd_frac_1000_2000: accel3 / mic ratio vs healthy,new idea,"[1, 4]",kept (unique)
+0,bowed_rotor,ML0_BR_S01,xch__accel3_mic__sk_rise_ratio,sk_rise_ratio: accel3 / mic ratio vs healthy,new idea,[3],trimmed to speeds [3]: other speeds repeat ML0_BR_P00
+0,bowed_rotor,ML0_BR_S02,xch__accel3_mic__sk_mean_above_transition,sk_mean_above_transition: accel3 / mic ratio vs healthy,new idea,[8],"dropped: repeats ML0_BR_P00, ML0_BR_S06, ML0_BR_S01"
+0,bowed_rotor,ML0_BR_S03,xch__accel2_accel3__dwt_D1_energy_frac,dwt_D1_energy_frac: accel2 / accel3 ratio vs healthy,new idea,[3],kept (unique)
+0,faulty_bearing,ML0_FB_P07,xch__accel1_accel2__fft_spectral_flatness,fft_spectral_flatness: accel1 / accel2 ratio vs healthy,new idea,"[2, 3, 4, 5, 6, 7, 8]",kept (unique)
+0,faulty_bearing,ML0_FB_P08,xch__accel1_accel2__psd_frac_5000_10000,psd_frac_5000_10000: accel1 / accel2 ratio vs healthy,new idea,"[2, 3, 4, 5, 6, 7, 8]",dropped: repeats ML0_FB_P07
+0,faulty_bearing,ML0_FB_P12,xch__accel1_accel2__dwt_d4_frac,dwt_d4_frac: accel1 / accel2 ratio vs healthy,extends hand trigger feature accel1__dwt_d4_frac,"[1, 2, 3, 5, 7]",kept (unique)
+0,faulty_bearing,ML0_FB_P15,xch__accel1_accel2__dwt_hf_frac,dwt_hf_frac: accel1 / accel2 ratio vs healthy,extends hand trigger feature accel1__dwt_hf_frac,"[2, 3, 4, 5, 7]",dropped: repeats ML0_FB_P07
+0,faulty_bearing,ML0_FB_P22,xch__accel1_accel2__psd_frac_1000_2000,psd_frac_1000_2000: accel1 / accel2 ratio vs healthy,new idea,"[1, 2, 3, 5, 7]",dropped: repeats ML0_FB_P12
+0,faulty_bearing,ML0_FB_P09,xch__accel1_accel2__psd_frac_10000_20833,psd_frac_10000_20833: accel1 / accel2 ratio vs healthy,new idea,"[3, 4, 5, 7]",dropped: repeats ML0_FB_P07
+0,faulty_bearing,ML0_FB_P13,xch__accel1_accel3__dwt_D4_energy_frac,dwt_D4_energy_frac: accel1 / accel3 ratio vs healthy,new idea,"[2, 3, 5, 7]",dropped: repeats ML0_FB_P12
+0,faulty_bearing,ML0_FB_P16,rel__accel1__psd_frac_1000_2000,accel1 psd_frac_1000_2000 vs healthy,new idea,"[1, 2, 5, 7]",dropped: repeats ML0_FB_P12
+0,faulty_bearing,ML0_FB_P17,xch__accel1_mic__dwt_d4_frac,dwt_d4_frac: accel1 / mic ratio vs healthy,extends hand trigger feature accel1__dwt_d4_frac,"[1, 2, 5, 7]",dropped: repeats ML0_FB_P12
+0,faulty_bearing,ML0_FB_P11,rel__accel1__fft_spectral_centroid_hz,accel1 fft_spectral_centroid_hz vs healthy,new idea,"[5, 6, 7]",dropped: repeats ML0_FB_P07
+0,faulty_bearing,ML0_FB_P19,xch__accel1_accel2__psd_centroid_hz,psd_centroid_hz: accel1 / accel2 ratio vs healthy,new idea,"[2, 5, 7]",dropped: repeats ML0_FB_P07
+0,faulty_bearing,ML0_FB_S25,xch__accel1_accel2__psd_frac_500_1000,psd_frac_500_1000: accel1 / accel2 ratio vs healthy,new idea,"[1, 2, 4]",kept (unique)
+0,faulty_bearing,ML0_FB_S10,xch__accel1_accel2__psd_frac_10000_20833,psd_frac_10000_20833: accel1 / accel2 ratio vs healthy,new idea,"[2, 8]",dropped: repeats ML0_FB_P07
+0,faulty_bearing,ML0_FB_S14,xch__accel1_accel3__dwt_D4_energy_frac,dwt_D4_energy_frac: accel1 / accel3 ratio vs healthy,new idea,[1],dropped: repeats ML0_FB_P12
+0,faulty_bearing,ML0_FB_S18,xch__accel1_mic__dwt_d4_frac,dwt_d4_frac: accel1 / mic ratio vs healthy,extends hand trigger feature accel1__dwt_d4_frac,[3],dropped: repeats ML0_FB_P12
+0,faulty_bearing,ML0_FB_S20,xch__accel1_accel2__psd_centroid_hz,psd_centroid_hz: accel1 / accel2 ratio vs healthy,new idea,[3],dropped: repeats ML0_FB_P07
+0,faulty_bearing,ML0_FB_S21,xch__accel1_accel2__psd_frac_2000_5000,psd_frac_2000_5000: accel1 / accel2 ratio vs healthy,new idea,[3],dropped: repeats ML0_FB_P12
+0,faulty_bearing,ML0_FB_S23,xch__accel1_accel2__stat_variance,stat_variance: accel1 / accel2 ratio vs healthy,new idea,[1],dropped: repeats ML0_FB_S25
+0,faulty_bearing,ML0_FB_S24,xch__accel1_mic__dwt_D2_energy_frac,dwt_D2_energy_frac: accel1 / mic ratio vs healthy,new idea,[4],kept (unique)
+0,broken_rotor_bars,ML0_KA_P26,xch__accel1_accel2__psd_frac_2000_5000,psd_frac_2000_5000: accel1 / accel2 ratio vs healthy,new idea,"[4, 6, 8]",kept (unique)
+0,broken_rotor_bars,ML0_KA_S27,xch__accel3_mic__psd_frac_5000_10000,psd_frac_5000_10000: accel3 / mic ratio vs healthy,new idea,"[2, 4]",kept (unique)
+0,broken_rotor_bars,ML0_KA_S28,xch__accel1_mic__psd_frac_500_1000,psd_frac_500_1000: accel1 / mic ratio vs healthy,new idea,[1],trimmed to speeds [1]: other speeds repeat ML0_KA_S27
+0,broken_rotor_bars,ML0_KA_S29,xch__accel2_accel3__psd_frac_5000_10000,psd_frac_5000_10000: accel2 / accel3 ratio vs healthy,new idea,[4],dropped: repeats ML0_KA_S27
+0,rotor_misalignment,ML0_RM_S33,xch__accel1_accel3__psd_frac_2000_5000,psd_frac_2000_5000: accel1 / accel3 ratio vs healthy,new idea,"[1, 2, 5, 7]",kept (unique)
+0,rotor_misalignment,ML0_RM_P31,rel__accel1__psd_frac_2000_5000,accel1 psd_frac_2000_5000 vs healthy,new idea,"[3, 5, 7]",trimmed to speeds [3]: other speeds repeat ML0_RM_S33
+0,rotor_misalignment,ML0_RM_S30,xch__accel1_accel2__psd_frac_5000_10000,psd_frac_5000_10000: accel1 / accel2 ratio vs healthy,new idea,"[1, 2]",kept (unique)
+0,rotor_misalignment,ML0_RM_S32,xch__accel1_accel2__dwt_D3_energy_frac,dwt_D3_energy_frac: accel1 / accel2 ratio vs healthy,new idea,"[1, 4]","trimmed to speeds [4]: other speeds repeat ML0_RM_S33, ML0_RM_P31, ML0_RM_S30"
+0,rotor_unbalance,ML0_RU_P34,rel__accel1__psd_frac_1000_2000,accel1 psd_frac_1000_2000 vs healthy,new idea,"[3, 6, 8]",kept (unique)
+0,rotor_unbalance,ML0_RU_S35,xch__accel1_accel3__dwt_d4_frac,dwt_d4_frac: accel1 / accel3 ratio vs healthy,extends hand trigger feature accel1__dwt_d4_frac,[2],trimmed to speeds [2]: other speeds repeat ML0_RU_P34
+0,rotor_unbalance,ML0_RU_S36,xch__accel1_accel2__dwt_d4_frac,dwt_d4_frac: accel1 / accel2 ratio vs healthy,extends hand trigger feature accel1__dwt_d4_frac,[2],"dropped: repeats ML0_RU_P34, ML0_RU_S35"
+0,rotor_unbalance,ML0_RU_S37,xch__accel2_accel3__psd_frac_500_1000,psd_frac_500_1000: accel2 / accel3 ratio vs healthy,new idea,[3],kept (unique)
+0,stator_winding,ML0_SW_S39,xch__accel2_accel3__psd_frac_1000_2000,psd_frac_1000_2000: accel2 / accel3 ratio vs healthy,new idea,"[3, 4, 6, 8]",kept (unique)
+0,stator_winding,ML0_SW_P38,rel__accel2__dwt_D1_energy_frac,accel2 dwt_D1_energy_frac vs healthy,new idea,"[2, 5, 7]",kept (unique)
+0,stator_winding,ML0_SW_P41,rel__accel2__psd_frac_1000_2000,accel2 psd_frac_1000_2000 vs healthy,new idea,"[3, 5, 7]","trimmed to speeds [5, 7]: other speeds repeat ML0_SW_S39"
+0,stator_winding,ML0_SW_S40,xch__accel1_accel2__sk_mean_above_transition,sk_mean_above_transition: accel1 / accel2 ratio vs healthy,new idea,"[5, 7]",kept (unique)
+0,stator_winding,ML0_SW_S42,xch__accel2_accel3__stat_crest_factor,stat_crest_factor: accel2 / accel3 ratio vs healthy,new idea,[3],kept (unique)

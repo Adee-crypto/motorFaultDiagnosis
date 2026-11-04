@@ -1,0 +1,8 @@
+,rules_found,kept_real,chance_mean,chance_95pct,p
+bowed_rotor,11.0,6.0,0.81,2.0,0.0
+faulty_bearing,27.0,24.0,0.94,2.0,0.0
+broken_rotor_bars,7.0,5.0,0.24,1.0,0.0
+rotor_misalignment,9.0,5.0,0.36,1.0,0.0
+rotor_unbalance,5.0,2.0,0.06,1.0,0.0
+stator_winding,10.0,3.0,0.13,1.0,0.0
+ALL,69.0,45.0,2.54,5.0,0.0

@@ -1,0 +1,161 @@
+fault,cond,pred,correct,tie,faulty_flag,true_pts,true_possible,test
+HH,1,HH,True,False,False,0.0,0.0,in-sample
+HH,2,HH,True,False,False,0.0,0.0,in-sample
+HH,3,HH,True,False,False,0.0,0.0,in-sample
+HH,4,HH,True,False,False,0.0,0.0,in-sample
+HH,5,HH,True,False,False,0.0,0.0,in-sample
+HH,6,HH,True,False,False,0.0,0.0,in-sample
+HH,7,HH,True,False,False,0.0,0.0,in-sample
+HH,8,HH,True,False,False,0.0,0.0,in-sample
+SW,1,SW,True,False,True,3.75,3.75,in-sample
+SW,2,SW,True,False,True,3.75,3.75,in-sample
+SW,3,SW,True,False,True,3.75,3.75,in-sample
+SW,4,SW,True,False,True,2.5,2.5,in-sample
+SW,5,SW,True,False,True,4.25,4.25,in-sample
+SW,6,SW,True,False,True,3.25,3.25,in-sample
+SW,7,SW,True,False,True,3.0,3.0,in-sample
+SW,8,SW,True,False,True,6.75,6.75,in-sample
+VU,1,none,False,False,True,0.0,0.0,in-sample
+VU,2,RU,False,False,True,0.0,0.0,in-sample
+VU,3,VU,True,False,True,1.0,1.0,in-sample
+VU,4,none,False,False,True,0.0,0.0,in-sample
+VU,5,VU,True,False,True,1.0,1.0,in-sample
+VU,6,VU,True,False,True,2.5,2.5,in-sample
+VU,7,none,False,False,True,0.0,0.0,in-sample
+VU,8,none,False,False,True,0.0,0.0,in-sample
+RU,1,RU,True,False,True,0.5,0.5,in-sample
+RU,2,RU,True,False,True,0.5,0.5,in-sample
+RU,3,RU,True,False,True,2.5,2.5,in-sample
+RU,4,RU,True,False,True,1.5,1.5,in-sample
+RU,5,RU,True,False,True,1.5,1.5,in-sample
+RU,6,RU,True,False,True,0.5,0.5,in-sample
+RU,7,RU,True,False,True,1.5,1.5,in-sample
+RU,8,none,False,False,True,0.0,0.0,in-sample
+RM,1,RM,True,False,True,1.0,1.0,in-sample
+RM,2,RM,True,False,True,3.0,3.0,in-sample
+RM,3,RM,True,False,True,2.5,2.5,in-sample
+RM,4,RM,True,False,True,1.5,1.5,in-sample
+RM,5,RM,True,False,True,1.0,1.0,in-sample
+RM,6,RM,True,False,True,1.5,1.5,in-sample
+RM,7,RM,True,False,True,1.0,1.0,in-sample
+RM,8,none,False,False,True,0.0,0.0,in-sample
+BR,1,BR,True,False,True,1.0,1.0,in-sample
+BR,2,BR,True,False,True,3.0,3.0,in-sample
+BR,3,BR,True,False,True,3.0,3.0,in-sample
+BR,4,BR,True,False,True,6.5,6.5,in-sample
+BR,5,BR,True,False,True,2.5,2.5,in-sample
+BR,6,BR,True,False,True,4.5,4.5,in-sample
+BR,7,BR,True,False,True,2.5,2.5,in-sample
+BR,8,BR,True,False,True,2.5,2.5,in-sample
+FB,1,FB,True,False,True,2.0,2.0,in-sample
+FB,2,FB,True,False,True,2.5,2.5,in-sample
+FB,3,FB,True,False,True,2.5,2.5,in-sample
+FB,4,FB,True,False,True,1.0,1.0,in-sample
+FB,5,FB,True,False,True,3.0,3.0,in-sample
+FB,6,FB,True,False,True,3.0,3.0,in-sample
+FB,7,FB,True,False,True,3.0,3.0,in-sample
+FB,8,FB,True,False,True,3.0,3.0,in-sample
+KA,1,RU,False,False,True,0.0,0.0,in-sample
+KA,2,RU,False,False,True,0.0,0.0,in-sample
+KA,3,none,False,False,True,0.0,0.0,in-sample
+KA,4,KA,True,False,True,2.0,2.0,in-sample
+KA,5,KA,True,False,True,2.0,2.0,in-sample
+KA,6,KA,True,False,True,2.0,2.0,in-sample
+KA,7,KA,True,False,True,2.0,2.0,in-sample
+KA,8,KA,True,False,True,2.0,2.0,in-sample
+HH,1,HH,True,False,False,0.0,0.0,fit A -> test B
+HH,2,HH,True,False,False,0.0,0.0,fit A -> test B
+HH,3,HH,True,False,False,0.0,0.0,fit A -> test B
+HH,4,HH,True,False,False,0.0,0.0,fit A -> test B
+BR,1,BR,True,False,True,1.0,1.0,fit A -> test B
+BR,2,BR,True,False,True,3.0,3.0,fit A -> test B
+BR,3,BR,True,False,True,3.0,3.0,fit A -> test B
+BR,4,BR,True,False,True,5.0,6.5,fit A -> test B
+FB,1,FB,True,False,True,1.5,2.0,fit A -> test B
+FB,2,FB,True,False,True,2.5,3.0,fit A -> test B
+FB,3,FB,True,False,True,2.5,3.0,fit A -> test B
+FB,4,FB,True,False,True,2.5,3.0,fit A -> test B
+KA,1,none,False,False,True,0.0,0.0,fit A -> test B
+KA,2,SW,False,False,True,0.0,0.0,fit A -> test B
+KA,3,VU,False,False,True,0.0,0.0,fit A -> test B
+KA,4,FB,False,False,True,1.0,3.5,fit A -> test B
+RM,1,RM,True,False,True,1.0,1.0,fit A -> test B
+RM,2,RM,True,False,True,2.0,2.0,fit A -> test B
+RM,3,RM,True,False,True,2.0,2.0,fit A -> test B
+RM,4,RM,True,False,True,1.0,1.5,fit A -> test B
+RU,1,RU,True,False,True,0.5,0.5,fit A -> test B
+RU,2,RU,True,True,True,0.5,0.5,fit A -> test B
+RU,3,RU,True,False,True,2.5,3.0,fit A -> test B
+RU,4,RU,True,False,True,1.0,1.0,fit A -> test B
+SW,1,SW,True,False,True,3.0,3.75,fit A -> test B
+SW,2,SW,True,False,True,2.75,2.75,fit A -> test B
+SW,3,SW,True,False,True,3.75,3.75,fit A -> test B
+SW,4,SW,True,False,True,2.5,2.5,fit A -> test B
+VU,1,none,False,False,True,0.0,0.0,fit A -> test B
+VU,2,none,False,False,True,0.0,0.0,fit A -> test B
+VU,3,SW,False,False,True,0.0,1.0,fit A -> test B
+VU,4,none,False,False,True,0.0,0.0,fit A -> test B
+HH,1,HH,True,True,False,0.0,0.0,fit B -> test A
+HH,2,HH,True,False,False,0.0,0.0,fit B -> test A
+HH,3,HH,True,False,False,0.0,0.0,fit B -> test A
+HH,4,HH,True,False,False,0.0,0.0,fit B -> test A
+BR,1,BR,True,False,True,1.0,1.0,fit B -> test A
+BR,2,BR,True,False,True,3.0,3.0,fit B -> test A
+BR,3,BR,True,False,True,3.0,3.0,fit B -> test A
+BR,4,BR,True,False,True,5.0,5.0,fit B -> test A
+FB,1,FB,True,False,True,1.5,1.5,fit B -> test A
+FB,2,FB,True,False,True,2.5,3.0,fit B -> test A
+FB,3,FB,True,False,True,2.5,3.0,fit B -> test A
+FB,4,FB,True,False,True,2.5,3.0,fit B -> test A
+KA,1,none,False,False,True,0.0,0.0,fit B -> test A
+KA,2,none,False,False,True,0.0,0.0,fit B -> test A
+KA,3,none,False,False,True,0.0,0.0,fit B -> test A
+KA,4,FB,False,False,True,1.0,2.0,fit B -> test A
+RM,1,RM,True,False,True,1.0,1.0,fit B -> test A
+RM,2,RM,True,False,True,2.0,3.0,fit B -> test A
+RM,3,RM,True,False,True,1.0,2.5,fit B -> test A
+RM,4,RM,True,False,True,1.5,1.5,fit B -> test A
+RU,1,RU,True,False,True,0.5,0.5,fit B -> test A
+RU,2,RU,True,False,True,0.5,0.5,fit B -> test A
+RU,3,RU,True,False,True,2.5,2.5,fit B -> test A
+RU,4,RU,True,False,True,1.0,1.0,fit B -> test A
+SW,1,SW,True,False,True,3.75,3.75,fit B -> test A
+SW,2,SW,True,False,True,2.0,2.75,fit B -> test A
+SW,3,SW,True,False,True,3.0,3.75,fit B -> test A
+SW,4,SW,True,False,True,2.5,2.5,fit B -> test A
+VU,1,none,False,False,True,0.0,0.0,fit B -> test A
+VU,2,FB,False,False,True,0.0,0.0,fit B -> test A
+VU,3,none,False,False,True,0.0,1.0,fit B -> test A
+VU,4,none,False,False,True,0.0,0.0,fit B -> test A
+HH,5,HH,True,False,False,0.0,0.0,cross-ramp
+HH,6,HH,True,False,False,0.0,0.0,cross-ramp
+HH,7,HH,True,False,False,0.0,0.0,cross-ramp
+HH,8,HH,True,True,False,0.0,0.0,cross-ramp
+SW,5,SW,True,False,True,2.5,4.0,cross-ramp
+SW,6,SW,True,False,True,3.25,3.75,cross-ramp
+SW,7,SW,True,False,True,2.25,3.25,cross-ramp
+SW,8,SW,True,False,True,3.25,4.25,cross-ramp
+VU,5,BR,False,False,True,0.0,0.0,cross-ramp
+VU,6,FB,False,False,True,0.0,0.0,cross-ramp
+VU,7,none,False,False,True,0.0,0.0,cross-ramp
+VU,8,RU,False,False,True,0.0,0.0,cross-ramp
+RU,5,RU,True,False,True,1.5,1.5,cross-ramp
+RU,6,none,False,False,True,0.0,0.0,cross-ramp
+RU,7,RU,True,True,True,1.5,1.5,cross-ramp
+RU,8,RU,True,False,True,0.5,0.5,cross-ramp
+RM,5,RM,True,True,True,1.0,1.0,cross-ramp
+RM,6,BR,False,False,True,0.0,0.0,cross-ramp
+RM,7,BR,False,False,True,1.0,1.0,cross-ramp
+RM,8,RU,False,True,True,0.0,0.0,cross-ramp
+BR,5,BR,True,False,True,1.0,2.5,cross-ramp
+BR,6,BR,True,False,True,2.5,2.5,cross-ramp
+BR,7,BR,True,False,True,1.5,2.5,cross-ramp
+BR,8,BR,True,False,True,2.5,4.0,cross-ramp
+FB,5,FB,True,False,True,2.5,3.0,cross-ramp
+FB,6,FB,True,False,True,2.5,3.0,cross-ramp
+FB,7,FB,True,False,True,3.0,3.0,cross-ramp
+FB,8,FB,True,False,True,2.5,3.0,cross-ramp
+KA,5,KA,True,False,True,2.0,2.0,cross-ramp
+KA,6,KA,True,False,True,2.0,2.0,cross-ramp
+KA,7,KA,True,False,True,2.0,2.0,cross-ramp
+KA,8,KA,True,False,True,2.0,2.0,cross-ramp

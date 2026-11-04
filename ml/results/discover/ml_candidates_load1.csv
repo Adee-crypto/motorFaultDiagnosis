@@ -1,0 +1,199 @@
+fault,feature,rank,importance,status,reason,meaning
+bowed_rotor,xch__accel1_accel3__dwt_D3_energy_frac,1,0.021235076370994165,candidate,,dwt_D3_energy_frac: accel1 / accel3 ratio vs healthy
+bowed_rotor,xch__accel1_accel3__dwt_D2_energy_frac,2,0.01806843178629974,candidate,,dwt_D2_energy_frac: accel1 / accel3 ratio vs healthy
+bowed_rotor,rel__accel1__dwt_D2_energy_frac,3,0.0171059157791967,dropped,near-duplicate of ML candidate xch__accel1_accel3__dwt_D2_energy_frac,accel1 dwt_D2_energy_frac vs healthy
+bowed_rotor,rel__accel1__dwt_D3_energy_frac,4,0.015965927225810066,dropped,same feature as a hand trigger,accel1 dwt_D3_energy_frac vs healthy
+bowed_rotor,rel__accel1__psd_frac_2000_5000,5,0.015709141778697935,candidate,,accel1 psd_frac_2000_5000 vs healthy
+bowed_rotor,xch__accel1_mic__sk_med_5_20k,6,0.013405917972727336,candidate,,sk_med_5_20k: accel1 / mic ratio vs healthy
+bowed_rotor,rel__accel1__psd_frac_1000_2000,7,0.013117067490187146,candidate,,accel1 psd_frac_1000_2000 vs healthy
+bowed_rotor,xch__accel1_accel2__psd_frac_2000_5000,8,0.01283618348337796,candidate,,psd_frac_2000_5000: accel1 / accel2 ratio vs healthy
+bowed_rotor,xch__accel1_accel3__dwt_D4_energy_frac,9,0.011677896824329901,candidate,,dwt_D4_energy_frac: accel1 / accel3 ratio vs healthy
+bowed_rotor,xch__accel1_accel3__dwt_d4_frac,10,0.011592863417925967,dropped,near-duplicate of ML candidate xch__accel1_accel3__dwt_D4_energy_frac,dwt_d4_frac: accel1 / accel3 ratio vs healthy
+bowed_rotor,xch__accel2_mic__fft_harmonic_energy_ratio,11,0.010792647074787795,candidate,,fft_harmonic_energy_ratio: accel2 / mic ratio vs healthy
+bowed_rotor,xch__accel1_accel2__fft_spectral_centroid_hz,12,0.010761434691546626,candidate,,fft_spectral_centroid_hz: accel1 / accel2 ratio vs healthy
+bowed_rotor,xch__accel1_accel2__dwt_d4_frac,13,0.01023849291376853,candidate,,dwt_d4_frac: accel1 / accel2 ratio vs healthy
+bowed_rotor,rel__accel3__psd_frac_2000_5000,14,0.010109899839500348,candidate,,accel3 psd_frac_2000_5000 vs healthy
+bowed_rotor,rel__accel1__dwt_d4_frac,15,0.009884326021975502,candidate,,accel1 dwt_d4_frac vs healthy
+bowed_rotor,xch__accel1_accel2__dwt_D2_energy_frac,16,0.009866760554618003,candidate,,dwt_D2_energy_frac: accel1 / accel2 ratio vs healthy
+bowed_rotor,xch__accel1_accel2__dwt_D3_energy_frac,17,0.009656054332775565,candidate,,dwt_D3_energy_frac: accel1 / accel2 ratio vs healthy
+bowed_rotor,xch__accel1_accel2__sk_peak_value,18,0.0081389354553912,candidate,,sk_peak_value: accel1 / accel2 ratio vs healthy
+bowed_rotor,xch__accel1_accel2__psd_frac_1000_2000,19,0.008021539545856831,candidate,,psd_frac_1000_2000: accel1 / accel2 ratio vs healthy
+bowed_rotor,xch__accel1_mic__dwt_D4_energy_frac,20,0.007999693992446716,candidate,,dwt_D4_energy_frac: accel1 / mic ratio vs healthy
+bowed_rotor,rel__accel2__env_end_over_peak,21,0.007848346635171538,candidate,,accel2 env_end_over_peak vs healthy
+bowed_rotor,rel__accel3__dwt_D2_energy_frac,22,0.007788396783059128,candidate,,accel3 dwt_D2_energy_frac vs healthy
+bowed_rotor,xch__accel1_accel2__dwt_D4_energy_frac,23,0.007577362206258732,dropped,near-duplicate of ML candidate xch__accel1_accel2__dwt_d4_frac,dwt_D4_energy_frac: accel1 / accel2 ratio vs healthy
+bowed_rotor,xch__accel1_mic__dwt_d4_frac,24,0.00726964900365749,dropped,near-duplicate of ML candidate xch__accel1_mic__dwt_D4_energy_frac,dwt_d4_frac: accel1 / mic ratio vs healthy
+bowed_rotor,rel__accel1__dwt_D4_energy_frac,25,0.007101857425784351,dropped,near-duplicate of ML candidate rel__accel1__dwt_d4_frac,accel1 dwt_D4_energy_frac vs healthy
+bowed_rotor,xch__accel1_accel3__psd_frac_2000_5000,26,0.007020180088358405,candidate,,psd_frac_2000_5000: accel1 / accel3 ratio vs healthy
+broken_rotor_bars,rel__accel3__psd_frac_10000_20833,1,0.030021751743208487,dropped,moves with hand trigger feature accel3__dwt_D1_energy_frac,accel3 psd_frac_10000_20833 vs healthy
+broken_rotor_bars,rel__accel3__dwt_high_bands_frac,2,0.024909446054619217,dropped,moves with hand trigger feature accel3__dwt_D1_energy_frac,accel3 dwt_high_bands_frac vs healthy
+broken_rotor_bars,rel__accel3__psd_frac_5000_10000,3,0.022411453337840878,dropped,moves with hand trigger feature accel3__dwt_D1_energy_frac,accel3 psd_frac_5000_10000 vs healthy
+broken_rotor_bars,rel__accel3__dwt_D1_energy_frac,4,0.02107307104806726,dropped,same feature as a hand trigger,accel3 dwt_D1_energy_frac vs healthy
+broken_rotor_bars,rel__accel3__dwt_hf_frac,5,0.020629964478886723,dropped,moves with hand trigger feature accel3__dwt_D1_energy_frac,accel3 dwt_hf_frac vs healthy
+broken_rotor_bars,rel__accel3__dwt_D2_energy_frac,6,0.01898358639659388,dropped,moves with hand trigger feature accel3__dwt_D1_energy_frac,accel3 dwt_D2_energy_frac vs healthy
+broken_rotor_bars,rel__accel3__psd_centroid_hz,7,0.015262454853592148,dropped,moves with hand trigger feature accel3__dwt_D1_energy_frac,accel3 psd_centroid_hz vs healthy
+broken_rotor_bars,xch__accel1_accel3__sk_med_1_5k,8,0.014560172849959842,candidate,,sk_med_1_5k: accel1 / accel3 ratio vs healthy
+broken_rotor_bars,rel__accel3__fft_spectral_flatness,9,0.014516379316213803,candidate,,accel3 fft_spectral_flatness vs healthy
+broken_rotor_bars,rel__accel1__sk_mean_above_transition,10,0.012684334237200334,dropped,moves with hand trigger feature accel1__sk_med_5_20k,accel1 sk_mean_above_transition vs healthy
+broken_rotor_bars,rel__accel1__sk_med_5_20k,11,0.011963720025661779,dropped,same feature as a hand trigger,accel1 sk_med_5_20k vs healthy
+broken_rotor_bars,xch__accel2_mic__psd_frac_500_1000,12,0.011908412449192796,candidate,,psd_frac_500_1000: accel2 / mic ratio vs healthy
+broken_rotor_bars,xch__accel1_accel3__sk_med_5_20k,13,0.010681485491661676,candidate,,sk_med_5_20k: accel1 / accel3 ratio vs healthy
+broken_rotor_bars,rel__accel2__psd_frac_5000_10000,14,0.010542919084256887,candidate,,accel2 psd_frac_5000_10000 vs healthy
+broken_rotor_bars,rel__accel3__stat_rms,15,0.009870361422900015,dropped,moves with hand trigger feature accel3__stat_variance,accel3 stat_rms vs healthy
+broken_rotor_bars,xch__accel1_accel2__stat_crest_factor,16,0.009622005883979502,candidate,,stat_crest_factor: accel1 / accel2 ratio vs healthy
+broken_rotor_bars,xch__accel2_mic__fft_low_freq_energy_frac,17,0.008307366341578666,candidate,,fft_low_freq_energy_frac: accel2 / mic ratio vs healthy
+broken_rotor_bars,rel__accel2__sk_mean_above_transition,18,0.007560813042541209,candidate,,accel2 sk_mean_above_transition vs healthy
+broken_rotor_bars,rel__accel2__sk_rise_ratio,19,0.007363707595884414,candidate,,accel2 sk_rise_ratio vs healthy
+broken_rotor_bars,rel__accel2__dwt_D2_energy_frac,20,0.006779363637339113,dropped,near-duplicate of ML candidate rel__accel2__psd_frac_5000_10000,accel2 dwt_D2_energy_frac vs healthy
+broken_rotor_bars,rel__accel2__sk_area_frac_above_transition,21,0.006616652097929262,dropped,near-duplicate of ML candidate rel__accel2__sk_rise_ratio,accel2 sk_area_frac_above_transition vs healthy
+broken_rotor_bars,xch__accel1_accel3__psd_frac_2000_5000,22,0.006314579745464829,candidate,,psd_frac_2000_5000: accel1 / accel3 ratio vs healthy
+broken_rotor_bars,xch__accel2_accel3__sk_mean_below_transition,23,0.006248575545046601,candidate,,sk_mean_below_transition: accel2 / accel3 ratio vs healthy
+broken_rotor_bars,rel__accel2__dwt_high_bands_frac,24,0.006186416664334582,dropped,near-duplicate of ML candidate rel__accel2__psd_frac_5000_10000,accel2 dwt_high_bands_frac vs healthy
+broken_rotor_bars,rel__accel1__psd_frac_5000_10000,25,0.00610741734365499,candidate,,accel1 psd_frac_5000_10000 vs healthy
+broken_rotor_bars,rel__accel2__dwt_D1_energy_frac,26,0.006097206674359709,candidate,,accel2 dwt_D1_energy_frac vs healthy
+broken_rotor_bars,xch__accel1_accel2__psd_frac_2000_5000,27,0.006040175417787622,candidate,,psd_frac_2000_5000: accel1 / accel2 ratio vs healthy
+broken_rotor_bars,rel__accel3__stat_peak,28,0.005975089526689074,candidate,,accel3 stat_peak vs healthy
+broken_rotor_bars,rel__mic__sk_peak_value,29,0.0058346903836165726,candidate,,mic sk_peak_value vs healthy
+broken_rotor_bars,xch__accel1_accel2__fft_f0_amp,30,0.005834234505629229,candidate,,fft_f0_amp: accel1 / accel2 ratio vs healthy
+broken_rotor_bars,xch__accel1_mic__psd_frac_0_500,31,0.005809694628355176,candidate,,psd_frac_0_500: accel1 / mic ratio vs healthy
+broken_rotor_bars,xch__accel1_accel2__sk_med_1_5k,32,0.00564232470911495,dropped,near-duplicate of ML candidate xch__accel1_accel3__sk_med_1_5k,sk_med_1_5k: accel1 / accel2 ratio vs healthy
+broken_rotor_bars,rel__accel1__psd_frac_2000_5000,33,0.005539028363632819,candidate,,accel1 psd_frac_2000_5000 vs healthy
+broken_rotor_bars,xch__accel2_accel3__stat_variance,34,0.005504853486946859,candidate,,stat_variance: accel2 / accel3 ratio vs healthy
+faulty_bearing,xch__accel1_accel2__psd_frac_5000_10000,1,0.05826507902737284,candidate,,psd_frac_5000_10000: accel1 / accel2 ratio vs healthy
+faulty_bearing,xch__accel1_accel2__fft_spectral_flatness,2,0.052948459958731584,candidate,,fft_spectral_flatness: accel1 / accel2 ratio vs healthy
+faulty_bearing,rel__accel1__fft_spectral_flatness,3,0.04798183550493619,dropped,near-duplicate of ML candidate xch__accel1_accel2__fft_spectral_flatness,accel1 fft_spectral_flatness vs healthy
+faulty_bearing,xch__accel1_accel3__fft_spectral_centroid_hz,4,0.045983215849650504,candidate,,fft_spectral_centroid_hz: accel1 / accel3 ratio vs healthy
+faulty_bearing,xch__accel1_accel3__fft_spectral_flatness,5,0.035371506628719206,dropped,near-duplicate of ML candidate xch__accel1_accel2__fft_spectral_flatness,fft_spectral_flatness: accel1 / accel3 ratio vs healthy
+faulty_bearing,xch__accel1_accel2__fft_spectral_centroid_hz,6,0.03497030361454567,dropped,near-duplicate of ML candidate xch__accel1_accel3__fft_spectral_centroid_hz,fft_spectral_centroid_hz: accel1 / accel2 ratio vs healthy
+faulty_bearing,rel__accel1__dwt_D4_energy_frac,7,0.03410941277641405,dropped,moves with hand trigger feature accel1__dwt_d4_frac,accel1 dwt_D4_energy_frac vs healthy
+faulty_bearing,xch__accel1_accel2__dwt_d4_frac,8,0.029998978893076927,candidate,,dwt_d4_frac: accel1 / accel2 ratio vs healthy
+faulty_bearing,rel__accel1__fft_spectral_centroid_hz,9,0.029694252058723527,candidate,,accel1 fft_spectral_centroid_hz vs healthy
+faulty_bearing,rel__accel1__psd_frac_1000_2000,10,0.02622574149252205,candidate,,accel1 psd_frac_1000_2000 vs healthy
+faulty_bearing,rel__accel1__dwt_high_bands_frac,11,0.023698126337498963,candidate,,accel1 dwt_high_bands_frac vs healthy
+faulty_bearing,xch__accel1_accel2__dwt_hf_frac,12,0.022896410654633815,dropped,moves with hand trigger feature accel1__dwt_hf_frac,dwt_hf_frac: accel1 / accel2 ratio vs healthy
+faulty_bearing,xch__accel1_accel3__dwt_D2_energy_frac,13,0.022150170565966146,candidate,,dwt_D2_energy_frac: accel1 / accel3 ratio vs healthy
+faulty_bearing,rel__accel1__psd_frac_5000_10000,14,0.02178350447794175,candidate,,accel1 psd_frac_5000_10000 vs healthy
+faulty_bearing,xch__accel1_mic__fft_spectral_flatness,15,0.02059182638599702,candidate,,fft_spectral_flatness: accel1 / mic ratio vs healthy
+faulty_bearing,xch__accel1_accel2__dwt_D1_energy_frac,16,0.02006663001216498,dropped,moves with hand trigger feature accel1__dwt_D1_energy_frac,dwt_D1_energy_frac: accel1 / accel2 ratio vs healthy
+faulty_bearing,xch__accel1_accel2__psd_frac_10000_20833,17,0.02005546676952269,dropped,moves with hand trigger feature accel1__dwt_D1_energy_frac,psd_frac_10000_20833: accel1 / accel2 ratio vs healthy
+faulty_bearing,rel__accel1__dwt_d4_frac,18,0.020016975808921977,dropped,same feature as a hand trigger,accel1 dwt_d4_frac vs healthy
+faulty_bearing,xch__accel1_mic__fft_spectral_centroid_hz,19,0.019402210201813173,dropped,near-duplicate of ML candidate xch__accel1_mic__fft_spectral_flatness,fft_spectral_centroid_hz: accel1 / mic ratio vs healthy
+faulty_bearing,xch__accel1_accel3__psd_frac_5000_10000,20,0.019284138160335744,dropped,near-duplicate of ML candidate xch__accel1_accel3__dwt_D2_energy_frac,psd_frac_5000_10000: accel1 / accel3 ratio vs healthy
+faulty_bearing,xch__accel1_accel2__dwt_high_bands_frac,21,0.01825001749362056,dropped,near-duplicate of ML candidate rel__accel1__dwt_high_bands_frac,dwt_high_bands_frac: accel1 / accel2 ratio vs healthy
+faulty_bearing,xch__accel1_accel3__psd_frac_10000_20833,22,0.017516317608057566,dropped,moves with hand trigger feature accel1__dwt_D1_energy_frac,psd_frac_10000_20833: accel1 / accel3 ratio vs healthy
+faulty_bearing,xch__accel1_accel2__dwt_D4_energy_frac,23,0.015594694338553743,dropped,near-duplicate of ML candidate xch__accel1_accel2__dwt_d4_frac,dwt_D4_energy_frac: accel1 / accel2 ratio vs healthy
+faulty_bearing,xch__accel1_accel3__dwt_D1_energy_frac,24,0.01376033178508798,dropped,moves with hand trigger feature accel1__dwt_D1_energy_frac,dwt_D1_energy_frac: accel1 / accel3 ratio vs healthy
+faulty_bearing,xch__accel1_accel3__dwt_high_bands_frac,25,0.01242580810269589,dropped,near-duplicate of ML candidate xch__accel1_accel3__dwt_D2_energy_frac,dwt_high_bands_frac: accel1 / accel3 ratio vs healthy
+faulty_bearing,rel__accel1__dwt_D3_energy_frac,26,0.01160748907601518,dropped,same feature as a hand trigger,accel1 dwt_D3_energy_frac vs healthy
+faulty_bearing,rel__accel1__dwt_D2_energy_frac,27,0.011403904853683342,dropped,near-duplicate of ML candidate xch__accel1_accel3__dwt_D2_energy_frac,accel1 dwt_D2_energy_frac vs healthy
+faulty_bearing,xch__accel1_accel2__psd_frac_1000_2000,28,0.0109074529216146,candidate,,psd_frac_1000_2000: accel1 / accel2 ratio vs healthy
+faulty_bearing,xch__accel2_mic__sk_mean_above_transition,29,0.010725393331462578,candidate,,sk_mean_above_transition: accel2 / mic ratio vs healthy
+faulty_bearing,xch__accel1_accel2__dwt_D2_energy_frac,30,0.009798857505408296,candidate,,dwt_D2_energy_frac: accel1 / accel2 ratio vs healthy
+faulty_bearing,xch__accel1_accel2__dwt_D3_energy_frac,31,0.009356680892159817,candidate,,dwt_D3_energy_frac: accel1 / accel2 ratio vs healthy
+faulty_bearing,xch__accel1_accel3__dwt_D3_energy_frac,32,0.008552433253942419,candidate,,dwt_D3_energy_frac: accel1 / accel3 ratio vs healthy
+faulty_bearing,rel__accel1__dwt_hf_frac,33,0.008406439368536887,dropped,same feature as a hand trigger,accel1 dwt_hf_frac vs healthy
+faulty_bearing,xch__accel1_accel3__dwt_hf_frac,34,0.007902353860023772,dropped,moves with hand trigger feature accel1__dwt_hf_frac,dwt_hf_frac: accel1 / accel3 ratio vs healthy
+faulty_bearing,xch__accel1_accel3__dwt_D4_energy_frac,35,0.0077886387810877705,candidate,,dwt_D4_energy_frac: accel1 / accel3 ratio vs healthy
+faulty_bearing,xch__accel1_accel3__dwt_d4_frac,36,0.007622037462049749,dropped,near-duplicate of ML candidate xch__accel1_accel3__dwt_D4_energy_frac,dwt_d4_frac: accel1 / accel3 ratio vs healthy
+faulty_bearing,rel__mic__sk_mean_above_transition,37,0.0062725374610762665,dropped,near-duplicate of ML candidate xch__accel2_mic__sk_mean_above_transition,mic sk_mean_above_transition vs healthy
+faulty_bearing,xch__accel1_mic__psd_frac_5000_10000,38,0.0052706597577409295,candidate,,psd_frac_5000_10000: accel1 / mic ratio vs healthy
+faulty_bearing,xch__accel2_mic__fft_spectral_flatness,39,0.00499078847309245,candidate,,fft_spectral_flatness: accel2 / mic ratio vs healthy
+faulty_bearing,rel__accel2__dwt_D1_energy_frac,40,0.004674214804444512,candidate,,accel2 dwt_D1_energy_frac vs healthy
+faulty_bearing,xch__accel2_mic__fft_spectral_centroid_hz,41,0.00443283378643189,dropped,near-duplicate of ML candidate xch__accel2_mic__fft_spectral_flatness,fft_spectral_centroid_hz: accel2 / mic ratio vs healthy
+faulty_bearing,rel__accel2__dwt_high_bands_frac,42,0.0043358320640193215,dropped,near-duplicate of ML candidate rel__accel2__dwt_D1_energy_frac,accel2 dwt_high_bands_frac vs healthy
+faulty_bearing,rel__accel2__psd_frac_10000_20833,43,0.003914269075726922,dropped,near-duplicate of ML candidate rel__accel2__dwt_D1_energy_frac,accel2 psd_frac_10000_20833 vs healthy
+faulty_bearing,xch__accel2_mic__sk_med_5_20k,44,0.003836267034412344,candidate,,sk_med_5_20k: accel2 / mic ratio vs healthy
+rotor_misalignment,xch__accel1_accel2__fft_spectral_flatness,1,0.042290563943302655,candidate,,fft_spectral_flatness: accel1 / accel2 ratio vs healthy
+rotor_misalignment,rel__accel1__dwt_high_bands_frac,2,0.027906054765258523,candidate,,accel1 dwt_high_bands_frac vs healthy
+rotor_misalignment,rel__accel1__sk_med_5_20k,3,0.02396165653407948,dropped,same feature as a hand trigger,accel1 sk_med_5_20k vs healthy
+rotor_misalignment,xch__accel1_accel2__psd_frac_10000_20833,4,0.02146941377881478,dropped,moves with hand trigger feature accel1__dwt_D1_energy_frac,psd_frac_10000_20833: accel1 / accel2 ratio vs healthy
+rotor_misalignment,xch__accel1_accel3__fft_spectral_flatness,5,0.020777434087412495,dropped,near-duplicate of ML candidate xch__accel1_accel2__fft_spectral_flatness,fft_spectral_flatness: accel1 / accel3 ratio vs healthy
+rotor_misalignment,xch__accel1_accel2__dwt_high_bands_frac,6,0.019062965795379742,dropped,near-duplicate of ML candidate rel__accel1__dwt_high_bands_frac,dwt_high_bands_frac: accel1 / accel2 ratio vs healthy
+rotor_misalignment,xch__accel1_accel2__sk_med_5_20k,7,0.017990700241247926,dropped,moves with hand trigger feature accel1__sk_med_5_20k,sk_med_5_20k: accel1 / accel2 ratio vs healthy
+rotor_misalignment,rel__accel1__dwt_D1_energy_frac,8,0.017456372423003668,dropped,same feature as a hand trigger,accel1 dwt_D1_energy_frac vs healthy
+rotor_misalignment,xch__accel1_accel2__dwt_D1_energy_frac,9,0.016746987228025475,dropped,moves with hand trigger feature accel1__dwt_D1_energy_frac,dwt_D1_energy_frac: accel1 / accel2 ratio vs healthy
+rotor_misalignment,xch__accel1_accel3__dwt_D3_energy_frac,10,0.015448759886258268,candidate,,dwt_D3_energy_frac: accel1 / accel3 ratio vs healthy
+rotor_misalignment,rel__accel1__psd_frac_10000_20833,11,0.014749180398168424,dropped,moves with hand trigger feature accel1__dwt_D1_energy_frac,accel1 psd_frac_10000_20833 vs healthy
+rotor_misalignment,xch__accel1_accel3__dwt_D1_energy_frac,12,0.014685808818087825,dropped,moves with hand trigger feature accel1__dwt_D1_energy_frac,dwt_D1_energy_frac: accel1 / accel3 ratio vs healthy
+rotor_misalignment,rel__accel3__psd_centroid_hz,13,0.014559383712675459,candidate,,accel3 psd_centroid_hz vs healthy
+rotor_misalignment,rel__accel1__fft_spectral_flatness,14,0.014503692631068965,dropped,near-duplicate of ML candidate xch__accel1_accel2__fft_spectral_flatness,accel1 fft_spectral_flatness vs healthy
+rotor_misalignment,rel__accel3__dwt_hf_frac,15,0.014425805325105494,dropped,near-duplicate of ML candidate rel__accel3__psd_centroid_hz,accel3 dwt_hf_frac vs healthy
+rotor_misalignment,xch__accel1_accel2__fft_spectral_centroid_hz,16,0.013652309635495985,candidate,,fft_spectral_centroid_hz: accel1 / accel2 ratio vs healthy
+rotor_misalignment,xch__accel1_accel2__psd_frac_2000_5000,17,0.0133090964396215,candidate,,psd_frac_2000_5000: accel1 / accel2 ratio vs healthy
+rotor_misalignment,rel__accel1__sk_mean_above_transition,18,0.013055472822447414,dropped,moves with hand trigger feature accel1__sk_med_5_20k,accel1 sk_mean_above_transition vs healthy
+rotor_misalignment,xch__accel1_accel3__psd_frac_10000_20833,19,0.012498744144446836,dropped,moves with hand trigger feature accel1__dwt_D1_energy_frac,psd_frac_10000_20833: accel1 / accel3 ratio vs healthy
+rotor_misalignment,xch__accel1_accel3__sk_med_5_20k,20,0.0107367689058495,candidate,,sk_med_5_20k: accel1 / accel3 ratio vs healthy
+rotor_misalignment,xch__accel1_accel3__dwt_d4_frac,21,0.0104417946692245,candidate,,dwt_d4_frac: accel1 / accel3 ratio vs healthy
+rotor_misalignment,rel__accel1__sk_med_1_5k,22,0.009924184447178151,dropped,same feature as a hand trigger,accel1 sk_med_1_5k vs healthy
+rotor_misalignment,xch__accel1_mic__fft_spectral_centroid_hz,23,0.009712710164510554,candidate,,fft_spectral_centroid_hz: accel1 / mic ratio vs healthy
+rotor_misalignment,rel__accel1__psd_frac_5000_10000,24,0.009097749699676439,candidate,,accel1 psd_frac_5000_10000 vs healthy
+rotor_misalignment,xch__accel1_accel2__dwt_D3_energy_frac,25,0.008974465941647655,candidate,,dwt_D3_energy_frac: accel1 / accel2 ratio vs healthy
+rotor_misalignment,xch__accel2_accel3__dwt_D1_energy_frac,26,0.008048237420241416,candidate,,dwt_D1_energy_frac: accel2 / accel3 ratio vs healthy
+rotor_misalignment,xch__accel1_accel2__psd_frac_5000_10000,27,0.008015563468256154,candidate,,psd_frac_5000_10000: accel1 / accel2 ratio vs healthy
+rotor_misalignment,xch__accel1_accel3__dwt_D4_energy_frac,28,0.00785272554618368,dropped,near-duplicate of ML candidate xch__accel1_accel3__dwt_d4_frac,dwt_D4_energy_frac: accel1 / accel3 ratio vs healthy
+rotor_misalignment,xch__accel1_accel2__stat_std,29,0.007260656376953469,candidate,,stat_std: accel1 / accel2 ratio vs healthy
+rotor_misalignment,rel__accel3__psd_frac_10000_20833,30,0.007149298374032258,dropped,near-duplicate of ML candidate rel__accel3__psd_centroid_hz,accel3 psd_frac_10000_20833 vs healthy
+rotor_misalignment,xch__accel1_accel2__dwt_d4_frac,31,0.0070835612313945775,candidate,,dwt_d4_frac: accel1 / accel2 ratio vs healthy
+rotor_misalignment,xch__accel1_accel2__sk_mean_above_transition,32,0.007002959642740917,dropped,moves with hand trigger feature accel1__sk_med_5_20k,sk_mean_above_transition: accel1 / accel2 ratio vs healthy
+rotor_misalignment,xch__accel1_mic__dwt_D1_energy_frac,33,0.006985573250203358,candidate,,dwt_D1_energy_frac: accel1 / mic ratio vs healthy
+rotor_misalignment,rel__accel3__dwt_high_bands_frac,34,0.0066039307995817975,dropped,near-duplicate of ML candidate rel__accel3__psd_centroid_hz,accel3 dwt_high_bands_frac vs healthy
+rotor_misalignment,xch__accel1_accel3__psd_frac_500_1000,35,0.006589581015842771,candidate,,psd_frac_500_1000: accel1 / accel3 ratio vs healthy
+rotor_misalignment,xch__accel2_accel3__dwt_high_bands_frac,36,0.006235677979185705,dropped,near-duplicate of ML candidate xch__accel2_accel3__dwt_D1_energy_frac,dwt_high_bands_frac: accel2 / accel3 ratio vs healthy
+rotor_misalignment,rel__accel3__sk_peak_value,37,0.006095833681912431,candidate,,accel3 sk_peak_value vs healthy
+rotor_misalignment,xch__accel2_accel3__dwt_D2_energy_frac,38,0.005958381187727927,dropped,near-duplicate of ML candidate xch__accel2_accel3__dwt_D1_energy_frac,dwt_D2_energy_frac: accel2 / accel3 ratio vs healthy
+rotor_misalignment,rel__accel3__dwt_D1_energy_frac,39,0.005852621483913254,dropped,near-duplicate of ML candidate rel__accel3__psd_centroid_hz,accel3 dwt_D1_energy_frac vs healthy
+rotor_misalignment,xch__accel2_accel3__sk_peak_value,40,0.00560858080387649,candidate,,sk_peak_value: accel2 / accel3 ratio vs healthy
+rotor_misalignment,rel__accel3__dwt_D2_energy_frac,41,0.005394536238210845,dropped,near-duplicate of ML candidate rel__accel3__psd_centroid_hz,accel3 dwt_D2_energy_frac vs healthy
+rotor_misalignment,rel__accel1__stat_peak,42,0.005361380206837537,candidate,,accel1 stat_peak vs healthy
+rotor_unbalance,xch__accel1_accel2__dwt_d4_frac,1,0.02153259569708388,candidate,,dwt_d4_frac: accel1 / accel2 ratio vs healthy
+rotor_unbalance,xch__accel1_accel2__dwt_D4_energy_frac,2,0.018284793738469897,dropped,near-duplicate of ML candidate xch__accel1_accel2__dwt_d4_frac,dwt_D4_energy_frac: accel1 / accel2 ratio vs healthy
+rotor_unbalance,xch__accel1_accel3__dwt_D4_energy_frac,3,0.017878376121883532,candidate,,dwt_D4_energy_frac: accel1 / accel3 ratio vs healthy
+rotor_unbalance,rel__accel1__psd_frac_1000_2000,4,0.014779370151784094,candidate,,accel1 psd_frac_1000_2000 vs healthy
+rotor_unbalance,rel__accel2__sk_rise_ratio,5,0.013037863545975348,candidate,,accel2 sk_rise_ratio vs healthy
+rotor_unbalance,rel__accel2__sk_area_frac_above_transition,6,0.012679553664959618,dropped,near-duplicate of ML candidate rel__accel2__sk_rise_ratio,accel2 sk_area_frac_above_transition vs healthy
+rotor_unbalance,xch__accel1_accel2__psd_frac_1000_2000,7,0.0125427295402109,candidate,,psd_frac_1000_2000: accel1 / accel2 ratio vs healthy
+rotor_unbalance,xch__accel1_accel3__dwt_d4_frac,8,0.01238057750959571,dropped,near-duplicate of ML candidate xch__accel1_accel3__dwt_D4_energy_frac,dwt_d4_frac: accel1 / accel3 ratio vs healthy
+rotor_unbalance,xch__accel3_mic__sk_area_frac_above_transition,9,0.010192210205402374,candidate,,sk_area_frac_above_transition: accel3 / mic ratio vs healthy
+rotor_unbalance,xch__accel3_mic__stat_crest_factor,10,0.009527071749653365,candidate,,stat_crest_factor: accel3 / mic ratio vs healthy
+rotor_unbalance,rel__mic__sk_area_frac_above_transition,11,0.009364912395201323,candidate,,mic sk_area_frac_above_transition vs healthy
+rotor_unbalance,rel__accel3__stat_peak,12,0.00912735375158483,candidate,,accel3 stat_peak vs healthy
+rotor_unbalance,xch__accel2_mic__sk_area_frac_above_transition,13,0.009040724702560182,candidate,,sk_area_frac_above_transition: accel2 / mic ratio vs healthy
+rotor_unbalance,xch__accel2_accel3__psd_frac_5000_10000,14,0.008557985578793921,candidate,,psd_frac_5000_10000: accel2 / accel3 ratio vs healthy
+rotor_unbalance,xch__accel1_accel2__env_start_over_peak,15,0.008004397511968728,candidate,,env_start_over_peak: accel1 / accel2 ratio vs healthy
+rotor_unbalance,xch__accel2_mic__psd_frac_500_1000,16,0.007937129801940723,candidate,,psd_frac_500_1000: accel2 / mic ratio vs healthy
+rotor_unbalance,rel__mic__fft_f0_amp,17,0.007792093002922116,candidate,,mic fft_f0_amp vs healthy
+rotor_unbalance,xch__accel1_accel2__sk_rise_ratio,18,0.00766179607664828,candidate,,sk_rise_ratio: accel1 / accel2 ratio vs healthy
+rotor_unbalance,xch__accel2_accel3__stat_peak,19,0.0073188871846419585,candidate,,stat_peak: accel2 / accel3 ratio vs healthy
+rotor_unbalance,xch__accel3_mic__stat_peak,20,0.00717572651322289,candidate,,stat_peak: accel3 / mic ratio vs healthy
+rotor_unbalance,xch__accel1_accel2__sk_area_frac_above_transition,21,0.00708814276618699,dropped,near-duplicate of ML candidate xch__accel1_accel2__sk_rise_ratio,sk_area_frac_above_transition: accel1 / accel2 ratio vs healthy
+rotor_unbalance,rel__accel1__fft_f0_amp,22,0.007029868547897678,candidate,,accel1 fft_f0_amp vs healthy
+rotor_unbalance,xch__accel2_mic__sk_rise_ratio,23,0.006794890941852469,dropped,near-duplicate of ML candidate rel__mic__sk_area_frac_above_transition,sk_rise_ratio: accel2 / mic ratio vs healthy
+rotor_unbalance,xch__accel1_accel3__sk_rise_ratio,24,0.006512092594153435,candidate,,sk_rise_ratio: accel1 / accel3 ratio vs healthy
+rotor_unbalance,rel__mic__fft_spectral_centroid_hz,25,0.0063896816892878554,candidate,,mic fft_spectral_centroid_hz vs healthy
+stator_winding,rel__accel3__env_end_over_peak,1,0.021292809490522348,candidate,,accel3 env_end_over_peak vs healthy
+stator_winding,rel__accel3__stat_peak,2,0.019365282315343263,dropped,same feature as a hand trigger,accel3 stat_peak vs healthy
+stator_winding,rel__accel1__dwt_D2_energy_frac,3,0.01833254974396299,candidate,,accel1 dwt_D2_energy_frac vs healthy
+stator_winding,rel__accel3__sk_med_1_5k,4,0.01613948422195335,dropped,same feature as a hand trigger,accel3 sk_med_1_5k vs healthy
+stator_winding,rel__accel3__sk_mean_below_transition,5,0.015206473758346491,candidate,,accel3 sk_mean_below_transition vs healthy
+stator_winding,xch__accel1_mic__fft_f0_amp,6,0.012140085901701597,candidate,,fft_f0_amp: accel1 / mic ratio vs healthy
+stator_winding,rel__accel2__sk_mean_below_transition,7,0.011624117353509392,candidate,,accel2 sk_mean_below_transition vs healthy
+stator_winding,xch__accel2_mic__sk_peak_value,8,0.010907616141736503,candidate,,sk_peak_value: accel2 / mic ratio vs healthy
+stator_winding,rel__accel1__stat_variance,9,0.01065459760192403,dropped,same feature as a hand trigger,accel1 stat_variance vs healthy
+stator_winding,rel__accel1__fft_f0_amp,10,0.010355493013093325,candidate,,accel1 fft_f0_amp vs healthy
+stator_winding,xch__accel1_accel2__dwt_D2_energy_frac,11,0.009720881586423084,dropped,near-duplicate of ML candidate rel__accel1__dwt_D2_energy_frac,dwt_D2_energy_frac: accel1 / accel2 ratio vs healthy
+stator_winding,rel__accel3__env_start_over_peak,12,0.009626616391192784,dropped,same feature as a hand trigger,accel3 env_start_over_peak vs healthy
+stator_winding,xch__accel3_mic__stat_peak,13,0.008470723882515508,candidate,,stat_peak: accel3 / mic ratio vs healthy
+stator_winding,xch__accel2_accel3__stat_peak,14,0.008387480993159226,candidate,,stat_peak: accel2 / accel3 ratio vs healthy
+stator_winding,xch__accel2_accel3__env_end_over_peak,15,0.00784809059375182,candidate,,env_end_over_peak: accel2 / accel3 ratio vs healthy
+stator_winding,xch__accel1_mic__sk_rise_ratio,16,0.007838639832681843,candidate,,sk_rise_ratio: accel1 / mic ratio vs healthy
+stator_winding,xch__accel1_accel2__stat_crest_factor,17,0.007305834981914363,candidate,,stat_crest_factor: accel1 / accel2 ratio vs healthy
+stator_winding,xch__accel1_accel2__sk_mean_below_transition,18,0.007245295089233583,candidate,,sk_mean_below_transition: accel1 / accel2 ratio vs healthy
+stator_winding,xch__accel1_accel2__dwt_D3_energy_frac,19,0.007038374314798795,candidate,,dwt_D3_energy_frac: accel1 / accel2 ratio vs healthy
+stator_winding,rel__mic__sk_mean_above_transition,20,0.006701301545137207,candidate,,mic sk_mean_above_transition vs healthy
+stator_winding,rel__accel2__env_peak_time_frac,21,0.006664969835988218,candidate,,accel2 env_peak_time_frac vs healthy
+stator_winding,xch__accel1_accel3__sk_mean_below_transition,22,0.00658297458590089,dropped,near-duplicate of ML candidate xch__accel1_accel2__sk_mean_below_transition,sk_mean_below_transition: accel1 / accel3 ratio vs healthy
+stator_winding,rel__accel2__fft_f0_amp,23,0.006495830692360062,candidate,,accel2 fft_f0_amp vs healthy
+stator_winding,rel__accel1__stat_std,24,0.006490196931871726,dropped,moves with hand trigger feature accel1__stat_variance,accel1 stat_std vs healthy
+stator_winding,xch__accel1_accel3__sk_peak_value,25,0.006479457948718063,candidate,,sk_peak_value: accel1 / accel3 ratio vs healthy
+stator_winding,xch__accel1_accel3__dwt_D3_energy_frac,26,0.006391495487543263,candidate,,dwt_D3_energy_frac: accel1 / accel3 ratio vs healthy
+stator_winding,xch__accel3_mic__psd_frac_1000_2000,27,0.006387877988306052,candidate,,psd_frac_1000_2000: accel3 / mic ratio vs healthy
