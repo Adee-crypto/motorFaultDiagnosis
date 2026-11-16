@@ -1,0 +1,15 @@
+Reasons to add (DS+Cloud)
+
+Why it’s useful at scale
+
+1. One place to see everything. A water utility with 40 pumping stations can’t send someone to check each one. Each node diagnoses its own motor locally, and the cloud gathers the results so one person sees every motor’s status on a single dashboard and gets an alert when something turns faulty.
+
+2. Knowing when the monitoring itself has broken. This is the most important part, and the easiest to overlook. If a node crashes or loses its network, it simply goes silent, and silence looks exactly like “no problems”. Without failure detection, a dead node would show its motor as healthy right up until the motor breaks. With heartbeats, the server shows “node offline, status unknown” instead. That’s the point of your Computer 2 example.
+
+3. Not losing data when the network drops. Remote pump stations, farms and ships often lose connectivity. With local storage on each node, results recorded during an outage are uploaded when the connection returns. Otherwise a fault that appeared during the outage would never be seen.
+
+4. Seeing trends over time. One verdict says “faulty now”. A central database of months of results shows a bearing slowly getting worse, which is what lets maintenance be planned instead of rushed. A small node can’t keep that much history, but a cloud database can.
+
+5. Updating every node at once. When the thresholds are recalibrated or a new trigger is added, the server pushes the new calibration file to all nodes. Nobody has to visit each device.
+
+6. Comparing motors with each other. With many similar motors, the server can spot one that behaves differently from its siblings. That catches problems no single node would notice, and over time gives exactly the extra recordings our triggers need to be recalibrated.
