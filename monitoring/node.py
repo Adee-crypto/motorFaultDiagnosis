@@ -6,6 +6,7 @@ computer attached to one motor.
 
     python monitoring/node.py --node-id node-1 --motor-id pump-A --data Loaded/RU --load 1
     python monitoring/node.py --node-id node-2 --motor-id fan-B --data Unloaded/HH --load 0 --realtime --speed 5
+    python monitoring/node.py --node-id node-1 --motor-id pump-A --data Loaded/RU --load 1 --broker localhost
 
 What it does
   1. "Sensors": replays the motor's CSV recordings one second at a time,
@@ -15,8 +16,11 @@ What it does
      (is this run above the healthy level?) and saves a "run_result".
   3. After a full cycle of runs (normally all 8 speed profiles): gives the
      three verdicts (triggers, ML, combined) and saves a "verdict".
-  4. Everything is saved in the node's local store (local_store.py), as
-     the messages it will later send over the network.
+  4. Everything is saved in the node's local store (local_store.py) first.
+  5. With --broker, each message is then sent through the MQTT broker
+     (messaging.py) and marked "sent" once the broker confirms it. If the
+     broker can't be reached, the node keeps working and the messages stay
+     unsent in the local store.
 
 The diagnosis itself is the unchanged code in the folder above
 (predict_motor.py, ml/predict_ml.py, fault_feature_extraction.py), so a
@@ -29,6 +33,8 @@ Options
   --cycles      how many full cycles to run (default 1; 0 = forever)
   --realtime    replay at the recording's real pace instead of as fast as possible
   --speed       with --realtime: playback speed-up (default 1)
+  --broker      MQTT broker as host or host:port (e.g. localhost); without it
+                the node only saves locally, as in step 1
 """
 import argparse
 import datetime as dt
@@ -53,6 +59,7 @@ import predict_motor as PM                    # noqa: E402  hand-found triggers
 import predict_ml as PML                      # noqa: E402  ML-found triggers
 from process_fault import FALLBACK_FS, CHANNEL_MAP, SPEED_LABELS  # noqa: E402
 from local_store import LocalStore            # noqa: E402
+from messaging import Publisher               # noqa: E402
 
 warnings.filterwarnings("ignore")
 
@@ -95,7 +102,7 @@ class SensorReplay:
 
 
 class Node:
-    def __init__(self, node_id, motor_id, data_dir, load, store_path, realtime=False, speed=1.0):
+    def __init__(self, node_id, motor_id, data_dir, load, store_path, realtime=False, speed=1.0, broker=None):
         self.node_id, self.motor_id, self.load = node_id, motor_id, load
         self.realtime, self.speed = realtime, speed
         self.files = self._find_runs(data_dir, load)
@@ -104,6 +111,7 @@ class Node:
         self.healthy = PM.read_calibration(
             os.path.join(ROOT, f"trigger_calibration_final_load{load}.json"))["healthy_reference"]
         self.stop = False
+        self.publisher = Publisher(broker, client_id=node_id, log=self.log) if broker else None
 
     @staticmethod
     def _find_runs(data_dir, load):
@@ -120,12 +128,17 @@ class Node:
         print(f"[{dt.datetime.now():%H:%M:%S}] {self.node_id} ({self.motor_id}): {text}", flush=True)
 
     def emit(self, type_, payload):
-        """build a message and save it locally (sending comes in step 2)"""
+        """build a message, save it locally, then send it if a broker is set"""
         msg = {"msg_id": f"{self.node_id}-{self.seq}", "seq": self.seq, "type": type_,
                "node_id": self.node_id, "motor_id": self.motor_id, "load": self.load,
                "created_at": now_utc(), "payload": jsonable(payload)}
-        self.store.add(msg)
+        self.store.add(msg)                       # saved first: nothing is lost if sending fails
         self.seq += 1
+        if self.publisher:
+            if self.publisher.send(msg):
+                self.store.mark_sent(msg["seq"])
+            else:
+                self.log(f"message #{msg['seq']} not sent; kept locally")
         return msg
 
     def record_run(self, path):
@@ -182,7 +195,10 @@ class Node:
             if not self.run_cycle(c):
                 break
             c += 1
-        self.log("stopped" if self.stop else "finished")
+        unsent = len(self.store.unsent())
+        self.log(("stopped" if self.stop else "finished") + (f"; {unsent} message(s) not sent" if unsent else ""))
+        if self.publisher:
+            self.publisher.close()
         self.store.close()
 
 
@@ -196,9 +212,10 @@ def main():
     ap.add_argument("--cycles", type=int, default=1, help="full cycles to run; 0 = forever")
     ap.add_argument("--realtime", action="store_true")
     ap.add_argument("--speed", type=float, default=1.0)
+    ap.add_argument("--broker", help="MQTT broker, host or host:port (e.g. localhost)")
     a = ap.parse_args()
     store = a.store or os.path.join(HERE, "stores", f"{a.node_id}.db")
-    node = Node(a.node_id, a.motor_id, a.data, a.load, store, a.realtime, a.speed)
+    node = Node(a.node_id, a.motor_id, a.data, a.load, store, a.realtime, a.speed, a.broker)
 
     def on_stop(*_):          # Ctrl+C: finish cleanly, keep what is already saved
         node.stop = True

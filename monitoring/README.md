@@ -5,6 +5,7 @@ at a time. The diagnosis code itself is not changed: the monitoring code only im
 
 ## Step 1: simulated monitoring node (done)
 
+
 A **node** is the small computer attached to one motor. Here it's a program that:
 
 1. pretends to receive the motor's sensor data live, one second at a time, by replaying its CSV
@@ -50,6 +51,40 @@ Every result is a JSON message, already in the form it will be sent in:
 ```
 A node sends results only, never raw signals: about 1 KB per run instead of about 20 MB.
 
+## Step 2: messaging through an MQTT broker (done)
+
+
+Nodes now send each message through a **broker**, a program that passes messages from senders
+to whoever is listening. Nodes and the server never need to know each other's address; they
+only know the broker. The broker is **Mosquitto**, run in Docker.
+
+```
+pip install -r monitoring/requirements.txt                    # once: the MQTT library
+docker compose -f monitoring/docker-compose.yml up -d         # start the broker
+python monitoring/listener.py                                 # terminal 1: watch messages arrive
+python monitoring/node.py --node-id node-1 --motor-id pump-A --data Loaded/RU --load 1 --broker localhost
+python monitoring/node.py --node-id node-2 --motor-id fan-B --data Unloaded/HH --load 0 --broker localhost
+docker compose -f monitoring/docker-compose.yml down          # stop the broker
+```
+
+How it works
+- **Topics:** a node publishes to `monitor/<node_id>/run_result` and `monitor/<node_id>/verdict`;
+  the listener subscribes to `monitor/#`, which means everything.
+- **Saved first, then sent:** a message is saved in the node's local store before sending, and
+  marked "sent" only after the broker confirms it (MQTT QoS 1, "at least once").
+- **Broker down:** the node keeps working, keeps the results locally as "not sent", and
+  reconnects by itself when the broker is back. Sending the backlog is step 5.
+- **Listener:** prints every message and flags gaps, repeats and out-of-order numbers in a
+  node's message numbers, the first sign of a lost or doubled message.
+
+| File | What it does |
+|---|---|
+| `messaging.py` | the node's connection to the broker: connect, reconnect, send with confirmation |
+| `listener.py` | shows every message arriving at the broker; stands in for the server until step 3 |
+| `docker-compose.yml` | starts the broker (later steps add the server, database and dashboard here) |
+| `broker/mosquitto.conf` | broker settings: port 1883, no password yet (step 8 adds security) |
+| `requirements.txt` | Python packages the monitoring code needs |
+
 ## Coming next
-2. Messaging through an MQTT broker  3. Central server and database  4. Failure detection
-5. Store-and-forward  6. Dashboard  7. One-command startup  8. Security  9. Cloud
+3. Central server and database  4. Failure detection  5. Store-and-forward  6. Dashboard
+7. One-command startup  8. Security  9. Cloud

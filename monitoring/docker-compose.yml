@@ -1,0 +1,20 @@
+# The monitoring system's services, run with Docker.
+#   start:  docker compose -f monitoring/docker-compose.yml up -d
+#   stop:   docker compose -f monitoring/docker-compose.yml down
+#   logs:   docker compose -f monitoring/docker-compose.yml logs -f broker
+#
+# Step 2: only the MQTT broker (Mosquitto). Later steps add the server,
+# database and dashboard here.
+services:
+  broker:
+    image: eclipse-mosquitto:2
+    container_name: monitor-broker
+    ports:
+      - "1883:1883"                 # MQTT, reachable on this PC as localhost:1883
+    volumes:
+      - ./broker/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - broker-data:/mosquitto/data # keeps queued messages across broker restarts
+    restart: unless-stopped
+
+volumes:
+  broker-data:

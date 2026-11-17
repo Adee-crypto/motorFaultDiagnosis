@@ -32,7 +32,7 @@ def main():
         head = f"#{m['seq']:<4} {m['created_at']}  {m['type']:10s}"
         if m["type"] == "run_result":
             print(f"{head} {p['run']:12s} {'FAULTY' if p['faulty'] else 'healthy':8s} "
-                  f"accel1 {p['accel1_x_healthy']}x  mic {p['mic_x_healthy']}x")
+                  f"accel1 {p['accel1_x_healthy']:.1f}x  mic {p['mic_x_healthy']:.1f}x")
         else:
             print(f"{head} cycle {p['cycle']}: triggers {p['triggers']['verdict']} ({p['triggers']['confidence']}) | "
                   f"ML {p['ml']['verdict']} ({p['ml']['confidence']}) | "
