@@ -85,6 +85,48 @@ How it works
 | `broker/mosquitto.conf` | broker settings: port 1883, no password yet (step 8 adds security) |
 | `requirements.txt` | Python packages the monitoring code needs |
 
+## Step 3: central server and database (done)
+
+The **server** receives every message from every node through the broker, saves it in one
+central database, and answers questions about the motors over HTTP (a web API).
+
+```
+pip install -r monitoring/requirements.txt                    # once: adds fastapi and uvicorn
+docker compose -f monitoring/docker-compose.yml up -d         # broker (as in step 2)
+python monitoring/server/server.py                            # terminal 1: the server
+python monitoring/node.py --node-id node-1 --motor-id pump-A --data Loaded/RU --load 1 --broker localhost
+python monitoring/status.py --nodes                           # every motor's status, as a table
+```
+Or open **http://localhost:8000/docs** in a browser and try the questions there.
+
+| Question (GET) | Answer |
+|---|---|
+| `/motors` | every motor: its node, load, when last heard from, latest run, latest verdict |
+| `/motors/{motor_id}` | one motor |
+| `/motors/{motor_id}/history?type=verdict&limit=20` | its recent messages |
+| `/nodes` | per node: messages received, duplicates ignored, highest message number, missing numbers |
+| `/health` | is the server up and connected to the broker |
+
+How it works
+- **Each message stored once:** the database key is the message id (`node-1-9`), so a message
+  delivered twice (MQTT "at least once") is stored once and counted as a duplicate.
+- **Latest status per motor:** updated with each new message. A late, older message from the same
+  node doesn't overwrite a newer one.
+- **Missing messages:** per node, the server knows the highest message number it has seen and
+  which numbers below it never arrived.
+- **Server offline:** the server keeps a lasting session with the broker (client id
+  `monitor-server`, clean session off), so Mosquitto keeps its messages while it's away and hands
+  them over when it reconnects.
+- **Known gap, fixed in step 5:** if the broker itself loses queued messages, the node has already
+  marked them sent. The server sees the missing numbers but can't get them back yet.
+- `listener.py` from step 2 still works next to the server, as a live view of the messages.
+
+| File | What it does |
+|---|---|
+| `server/server.py` | the server: MQTT subscriber + web API |
+| `server/central_store.py` | the central database (SQLite file `server/central.db`) |
+| `status.py` | asks the server for every motor's status and prints a table |
+
 ## Coming next
-3. Central server and database  4. Failure detection  5. Store-and-forward  6. Dashboard
-7. One-command startup  8. Security  9. Cloud
+4. Failure detection  5. Store-and-forward  6. Dashboard  7. One-command startup  8. Security
+9. Cloud
