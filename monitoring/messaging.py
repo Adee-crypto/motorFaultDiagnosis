@@ -1,7 +1,7 @@
 """
 messaging.py
 =============
-Sending node messages through an MQTT broker (step 2).
+A node's connection to the MQTT broker (steps 2 and 4).
 
 MQTT is a lightweight publish/subscribe protocol made for devices like
 monitoring nodes. Nodes "publish" messages to a "topic"; anything that
@@ -9,21 +9,34 @@ monitoring nodes. Nodes "publish" messages to a "topic"; anything that
 them on, so nodes and the server never need to know each other's address.
 
 Topics used:
-    monitor/<node_id>/run_result     after every run
-    monitor/<node_id>/verdict        after every full cycle
+    monitor/<node_id>/run_result     after every run                (QoS 1)
+    monitor/<node_id>/verdict        after every full cycle         (QoS 1)
+    monitor/<node_id>/heartbeat      "I'm alive", every few seconds (QoS 0)
+    monitor/<node_id>/status         "online" / "offline", kept by the broker (retained)
 Subscribing to  monitor/#  receives everything.
 
-Messages are sent with QoS 1 ("at least once"): the broker confirms each
-one, and the node marks it as sent only after that confirmation. A message
-may therefore arrive twice but is never silently lost while connected;
-the msg_id lets the receiver ignore repeats (steps 3 and 5).
+Results are sent with QoS 1 ("at least once"): the broker confirms each
+one, and the node marks it as sent only after that confirmation.
+
+Failure detection (step 4):
+  - heartbeat: a small message every few seconds. If the server stops
+    receiving them, the node is treated as offline, even if it is still
+    connected (for example a frozen program).
+  - last will: when the node connects it leaves an "offline, connection
+    lost" message with the broker. If the connection breaks without a
+    proper goodbye (crash, network loss), the broker publishes it for the
+    node. On a normal stop the node says "offline, stopped" itself.
+  - status messages are "retained": the broker keeps the latest one per
+    node and gives it to anyone who subscribes later, e.g. a restarted server.
 """
+import datetime as dt
 import json
 import threading
 
 import paho.mqtt.client as mqtt
 
 TOPIC_ROOT = "monitor"
+KEEPALIVE = 10   # seconds; the broker notices a silently dead connection after ~1.5x this
 
 
 def topic_for(message):
@@ -35,11 +48,16 @@ def parse_broker(text, default_port=1883):
     return host or "localhost", int(port) if port else default_port
 
 
+def now_utc():
+    return dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
+
+
 class Publisher:
     """One node's connection to the broker. Reconnects by itself in the background."""
 
-    def __init__(self, broker, client_id, log=print, connect_wait=3.0):
+    def __init__(self, broker, client_id, log=print, connect_wait=3.0, motor_id=None):
         self.host, self.port = parse_broker(broker)
+        self.node_id, self.motor_id = client_id, motor_id
         self.log = log
         self.connected = threading.Event()
         self.closing = False
@@ -47,14 +65,24 @@ class Publisher:
         self.client.on_connect = self._on_connect
         self.client.on_disconnect = self._on_disconnect
         self.client.reconnect_delay_set(min_delay=1, max_delay=10)
-        self.client.connect_async(self.host, self.port, keepalive=30)
+        # last will: published by the broker if this connection dies without a goodbye
+        self.client.will_set(self._status_topic(), self._status("offline", "connection lost"), qos=1, retain=True)
+        self.client.connect_async(self.host, self.port, keepalive=KEEPALIVE)
         self.client.loop_start()
         if not self.connected.wait(connect_wait):
             self.log(f"broker {self.host}:{self.port} not reachable yet; results are kept locally, retrying in background")
 
+    def _status_topic(self):
+        return f"{TOPIC_ROOT}/{self.node_id}/status"
+
+    def _status(self, status, reason):
+        return json.dumps({"type": "status", "node_id": self.node_id, "motor_id": self.motor_id,
+                           "status": status, "reason": reason, "at": now_utc()})
+
     def _on_connect(self, client, userdata, flags, reason_code, properties):
         if not reason_code.is_failure:
             self.connected.set()
+            client.publish(self._status_topic(), self._status("online", "connected"), qos=1, retain=True)
             self.log(f"connected to broker {self.host}:{self.port}")
 
     def _on_disconnect(self, client, userdata, flags, reason_code, properties):
@@ -73,7 +101,20 @@ class Publisher:
         except (RuntimeError, ValueError):
             return False
 
-    def close(self):
+    def heartbeat(self, info):
+        """fire-and-forget "I'm alive" (QoS 0): a lost heartbeat is simply replaced by the next one"""
+        if self.connected.is_set():
+            body = {"type": "heartbeat", "node_id": self.node_id, "motor_id": self.motor_id, "at": now_utc(), **info}
+            self.client.publish(f"{TOPIC_ROOT}/{self.node_id}/heartbeat", json.dumps(body), qos=0)
+
+    def close(self, reason="stopped"):
+        """normal stop: say goodbye, so the broker does not send the last will"""
         self.closing = True
+        if self.connected.is_set():
+            try:
+                self.client.publish(self._status_topic(), self._status("offline", reason),
+                                    qos=1, retain=True).wait_for_publish(3)
+            except (RuntimeError, ValueError):
+                pass
         self.client.disconnect()
         self.client.loop_stop()

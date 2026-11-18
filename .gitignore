@@ -3,3 +3,4 @@ __pycache__/
 Loaded/
 Unloaded/
 *.zip
+Remove-Item monitoringstores.txt

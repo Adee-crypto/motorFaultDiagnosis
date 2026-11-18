@@ -1,2 +1,0 @@
-Remove-Item monitoring\stores\*.db*
-Remove-Item monitoring\server\central.db*

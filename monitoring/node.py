@@ -7,6 +7,7 @@ computer attached to one motor.
     python monitoring/node.py --node-id node-1 --motor-id pump-A --data Loaded/RU --load 1
     python monitoring/node.py --node-id node-2 --motor-id fan-B --data Unloaded/HH --load 0 --realtime --speed 5
     python monitoring/node.py --node-id node-1 --motor-id pump-A --data Loaded/RU --load 1 --broker localhost
+    python monitoring/node.py --node-id node-3 --motor-id pump-C --data Loaded/FB --load 1 --broker localhost --cycles 0 --realtime --speed 5 --fail-after 40 --fail-mode crash
 
 What it does
   1. "Sensors": replays the motor's CSV recordings one second at a time,
@@ -21,6 +22,10 @@ What it does
      (messaging.py) and marked "sent" once the broker confirms it. If the
      broker can't be reached, the node keeps working and the messages stay
      unsent in the local store.
+  6. With --broker, it also sends a heartbeat ("I'm alive" and what it is
+     doing) every few seconds, and the broker holds a "last will" that
+     announces the node offline if its connection dies without a goodbye
+     (messaging.py). The server uses both to spot failed nodes (step 4).
 
 The diagnosis itself is the unchanged code in the folder above
 (predict_motor.py, ml/predict_ml.py, fault_feature_extraction.py), so a
@@ -35,6 +40,11 @@ Options
   --speed       with --realtime: playback speed-up (default 1)
   --broker      MQTT broker as host or host:port (e.g. localhost); without it
                 the node only saves locally, as in step 1
+  --heartbeat   seconds between heartbeats (default 5)
+  --fail-after, --fail-mode   for testing failure detection: after this many
+                seconds, either "crash" (the program dies at once, no goodbye)
+                or "hang" (it freezes: stays connected but stops working and
+                stops sending heartbeats)
 """
 import argparse
 import datetime as dt
@@ -43,6 +53,7 @@ import os
 import re
 import signal
 import sys
+import threading
 import time
 import warnings
 
@@ -102,7 +113,8 @@ class SensorReplay:
 
 
 class Node:
-    def __init__(self, node_id, motor_id, data_dir, load, store_path, realtime=False, speed=1.0, broker=None):
+    def __init__(self, node_id, motor_id, data_dir, load, store_path, realtime=False, speed=1.0, broker=None,
+                 heartbeat=5.0, fail_after=None, fail_mode=None):
         self.node_id, self.motor_id, self.load = node_id, motor_id, load
         self.realtime, self.speed = realtime, speed
         self.files = self._find_runs(data_dir, load)
@@ -111,7 +123,14 @@ class Node:
         self.healthy = PM.read_calibration(
             os.path.join(ROOT, f"trigger_calibration_final_load{load}.json"))["healthy_reference"]
         self.stop = False
-        self.publisher = Publisher(broker, client_id=node_id, log=self.log) if broker else None
+        # what the node is doing, reported in its heartbeats
+        self.state, self.cycle, self.runs_done = "starting", 0, 0
+        self.unsent_count = len(self.store.unsent())   # kept in memory: the heartbeat thread can't use the database
+        self.started = time.monotonic()
+        self.heartbeat_s, self.fail_after, self.fail_mode = heartbeat, fail_after, fail_mode
+        self.frozen = False
+        self._hb_stop = threading.Event()
+        self.publisher = Publisher(broker, client_id=node_id, log=self.log, motor_id=motor_id) if broker else None
 
     @staticmethod
     def _find_runs(data_dir, load):
@@ -129,22 +148,46 @@ class Node:
 
     def emit(self, type_, payload):
         """build a message, save it locally, then send it if a broker is set"""
-        msg = {"msg_id": f"{self.node_id}-{self.seq}", "seq": self.seq, "type": type_,
+        msg = {"msg_id": f"{self.node_id}-{self.store.epoch}-{self.seq}", "seq": self.seq,
+               "epoch": self.store.epoch, "type": type_,
                "node_id": self.node_id, "motor_id": self.motor_id, "load": self.load,
                "created_at": now_utc(), "payload": jsonable(payload)}
         self.store.add(msg)                       # saved first: nothing is lost if sending fails
         self.seq += 1
+        self.unsent_count += 1
         if self.publisher:
             if self.publisher.send(msg):
                 self.store.mark_sent(msg["seq"])
+                self.unsent_count -= 1
             else:
                 self.log(f"message #{msg['seq']} not sent; kept locally")
         return msg
+
+    # ------------------------------------------------ failure detection (step 4)
+    def _heartbeat_loop(self):
+        while not self._hb_stop.wait(self.heartbeat_s):
+            if self.frozen:                       # a frozen program sends nothing
+                continue
+            self.publisher.heartbeat({"state": self.state, "cycle": self.cycle, "runs_done": self.runs_done,
+                                      "runs_per_cycle": len(self.files), "unsent": self.unsent_count,
+                                      "uptime_s": round(time.monotonic() - self.started), "interval_s": self.heartbeat_s})
+
+    def _inject_failure(self):
+        if self.fail_mode == "crash":
+            self.log(f"TEST: crashing now (after {self.fail_after:g} s): no goodbye, no more heartbeats")
+            os._exit(1)                           # dies instantly, like a power cut or a crashed program
+        self.log(f"TEST: freezing now (after {self.fail_after:g} s): still connected, but no work and no heartbeats")
+        self.frozen = True
+
+    def _wait_if_frozen(self):
+        while self.frozen and not self.stop:
+            time.sleep(0.5)
 
     def record_run(self, path):
         """receive one run from the sensors, block by block; None if stopped"""
         blocks = []
         for b in SensorReplay(path, realtime=self.realtime, speed=self.speed).blocks():
+            self._wait_if_frozen()
             if self.stop:
                 return None
             blocks.append(b)
@@ -154,11 +197,14 @@ class Node:
 
     def run_cycle(self, cycle):
         vectors = {}
+        self.cycle, self.runs_done = cycle, 0
         for path in self.files:
             cid = PM.speed_of(path, None)
+            self.state = f"recording {os.path.basename(path)}"
             df = self.record_run(path)
             if df is None:
                 return False
+            self.state = f"analysing {os.path.basename(path)}"
             vec = F.build_feature_vector(df, FALLBACK_FS, channel_map=CHANNEL_MAP, condition_id=cid)
             vectors[path] = vec
             faulty, ev = F.is_faulty(vec, cid, self.healthy.get(cid))
@@ -169,8 +215,13 @@ class Node:
                                      "accel1_x_healthy": a1, "mic_x_healthy": mic})
             self.log(f"run {os.path.basename(path)} [{SPEED_LABELS[cid]}] "
                      f"{'FAULTY' if faulty else 'healthy level'} (accel1 {a1:.1f}x, mic {mic:.1f}x)")
+            self.runs_done += 1
+            self._wait_if_frozen()
+            if self.stop:
+                return False
 
         files = list(vectors)
+        self.state = "diagnosing"
         hand = PM.diagnose(files, self.load, verbose=False, vectors=vectors)
         ml = PML.diagnose_ml(files, self.load, verbose=False, vectors=vectors)
         pts = {k: hand["points"].get(k, 0.0) + ml["points"].get(k, 0.0)
@@ -183,13 +234,22 @@ class Node:
                             "points": dict(sorted(pts.items(), key=lambda kv: -kv[1]))},
                "agree": hand["verdict"] == ml["verdict"]}
         self.emit("verdict", out)
+        self.state = "idle"
         self.log(f"cycle {cycle} done: triggers {hand['verdict']} ({hand['confidence']}), "
                  f"ML {ml['verdict']} ({ml['confidence']}), combined {verdict} ({conf})")
         return True
 
     def run(self, cycles=1):
         self.log(f"start: {len(self.files)} runs per cycle, load {self.load}, "
-                 f"{'real time x' + str(self.speed) if self.realtime else 'fast replay'}, next seq {self.seq}")
+                 f"{'real time x' + str(self.speed) if self.realtime else 'fast replay'}, "
+                 f"next message #{self.seq} (store epoch {self.store.epoch})")
+        if self.publisher:
+            threading.Thread(target=self._heartbeat_loop, daemon=True).start()
+            self.log(f"heartbeat every {self.heartbeat_s:g} s")
+        if self.fail_mode:
+            t = threading.Timer(self.fail_after, self._inject_failure)
+            t.daemon = True
+            t.start()
         c = 1
         while not self.stop and (cycles == 0 or c <= cycles):
             if not self.run_cycle(c):
@@ -197,8 +257,9 @@ class Node:
             c += 1
         unsent = len(self.store.unsent())
         self.log(("stopped" if self.stop else "finished") + (f"; {unsent} message(s) not sent" if unsent else ""))
+        self._hb_stop.set()
         if self.publisher:
-            self.publisher.close()
+            self.publisher.close("stopped by user" if self.stop else "finished")
         self.store.close()
 
 
@@ -213,9 +274,15 @@ def main():
     ap.add_argument("--realtime", action="store_true")
     ap.add_argument("--speed", type=float, default=1.0)
     ap.add_argument("--broker", help="MQTT broker, host or host:port (e.g. localhost)")
+    ap.add_argument("--heartbeat", type=float, default=5.0, help="seconds between heartbeats (default 5)")
+    ap.add_argument("--fail-after", type=float, help="TEST: seconds until a simulated failure")
+    ap.add_argument("--fail-mode", choices=["crash", "hang"], help="TEST: crash = die at once; hang = freeze")
     a = ap.parse_args()
     store = a.store or os.path.join(HERE, "stores", f"{a.node_id}.db")
-    node = Node(a.node_id, a.motor_id, a.data, a.load, store, a.realtime, a.speed, a.broker)
+    if (a.fail_after is None) != (a.fail_mode is None):
+        ap.error("--fail-after and --fail-mode go together")
+    node = Node(a.node_id, a.motor_id, a.data, a.load, store, a.realtime, a.speed, a.broker,
+                a.heartbeat, a.fail_after, a.fail_mode)
 
     def on_stop(*_):          # Ctrl+C: finish cleanly, keep what is already saved
         node.stop = True

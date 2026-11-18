@@ -43,7 +43,7 @@ python monitoring/show_store.py monitoring/stores/node-1.db
 ### Message format
 Every result is a JSON message, already in the form it will be sent in:
 ```json
-{"msg_id": "node-1-9", "seq": 9, "type": "verdict", "node_id": "node-1", "motor_id": "pump-A",
+{"msg_id": "node-1-3f9a12c0-9", "seq": 9, "epoch": "3f9a12c0", "type": "verdict", "node_id": "node-1", "motor_id": "pump-A",
  "load": 1, "created_at": "2026-11-16T20:25:13+00:00",
  "payload": {"cycle": 1, "runs": 8, "faulty_runs": 8,
              "triggers": {"verdict": "rotor_unbalance", "confidence": "clear", "points": {...}},
@@ -127,6 +127,52 @@ How it works
 | `server/central_store.py` | the central database (SQLite file `server/central.db`) |
 | `status.py` | asks the server for every motor's status and prints a table |
 
+## Step 4: failure detection (done)
+
+The server now knows whether each node is alive, so a crashed, frozen or disconnected node is
+never mistaken for a healthy motor.
+
+```
+python monitoring/server/server.py                        # node offline after 15 s without a heartbeat
+python monitoring/node.py --node-id node-1 --motor-id pump-A --data Loaded/RU --load 1 --broker localhost --cycles 0 --realtime --speed 5
+python monitoring/status.py --events --watch 2            # live table of statuses and recent events
+```
+
+How it works
+- **Heartbeats:** every 5 s (`--heartbeat`) each node sends a small "I'm alive" message with what
+  it is doing (recording, analysing, diagnosing, idle), its progress through the cycle and how
+  many results are still unsent.
+- **Last will:** when a node connects, it leaves an "offline, connection lost" message with the
+  broker. If the connection breaks without a goodbye (crash, network loss), the broker
+  publishes it for the node: a crash is noticed within seconds. A node that stops normally
+  says goodbye itself ("finished" or "stopped by user").
+- **Watchdog:** a node counts as online only while its heartbeats keep arriving. No heartbeat
+  for 15 s (`--timeout` on the server) makes it offline. This catches a frozen node that is still
+  connected, which the last will can't. The server uses its own clock, since node clocks may
+  differ, and pauses the watchdog while it can't reach the broker itself.
+- **Motor status:** HEALTHY or FAULTY (node online, from its latest verdict), CHECKING (node
+  online, no verdict yet) or **UNKNOWN** (node offline or stopped). For an UNKNOWN motor the last
+  known verdict is shown with its time, but never as the current status.
+- **Events:** every change of a node's state (online, went silent, connection lost, stopped,
+  numbering restarted) is recorded with its time and reason: `GET /events`, `status.py --events`.
+- **Message numbering restarts:** each node store has a random "epoch" id, part of every message
+  id (`node-1-<epoch>-<seq>`). If a node's store is deleted or the device is replaced, its new
+  messages can't be mistaken for old ones; the server records a "numbering restarted" event.
+
+Testing failures: the node can fake one.
+```
+python monitoring/node.py ... --broker localhost --cycles 0 --realtime --speed 5 --fail-after 20 --fail-mode crash
+python monitoring/node.py ... --broker localhost --cycles 0 --realtime --speed 5 --fail-after 20 --fail-mode hang
+```
+`crash` kills the program at once (no goodbye): detected through the last will, within seconds.
+`hang` freezes it but keeps the connection open: detected only by the missing heartbeats,
+after the timeout. Stop a frozen node with Ctrl+C.
+
+Changes to existing files: `messaging.py` (heartbeat, last will, online/offline), `node.py`
+(heartbeat thread, test failures, epoch), `local_store.py` (epoch), `server/central_store.py`
+(node states, events, epochs; an existing step 3 database is upgraded automatically),
+`server/server.py` (watchdog, `/events`, `--timeout`), `status.py` (status column, `--events`,
+`--watch`), `listener.py` (shows online/offline; `--heartbeats` to show heartbeats).
+
 ## Coming next
-4. Failure detection  5. Store-and-forward  6. Dashboard  7. One-command startup  8. Security
-9. Cloud
+5. Store-and-forward  6. Dashboard  7. One-command startup  8. Security  9. Cloud

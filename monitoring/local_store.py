@@ -11,18 +11,23 @@ second is what will let a node keep working when the network is down
 Table `messages`
     seq         1, 2, 3, ... per node, never reused, survives restarts
                 (the server will use it to spot missing or repeated messages)
-    msg_id      "<node_id>-<seq>", unique
+    msg_id      "<node_id>-<epoch>-<seq>", unique
     type        "run_result" (after every run) or "verdict" (after 8 runs)
     created_at  UTC time, ISO format
     body        the full message as JSON
     sent        0 = not yet sent to the server (used from step 5)
 
 Table `meta` remembers which node and motor the file belongs to, so one
-node's file can't be reused by another by mistake.
+node's file can't be reused by another by mistake, and the store's "epoch":
+a random id made when the file is created. Every message carries it, and
+its msg_id is "<node_id>-<epoch>-<seq>". If the file is ever deleted or a
+device is replaced, numbering restarts at 1 under a new epoch, so new
+messages can never be mistaken for old ones (step 4).
 """
 import json
 import os
 import sqlite3
+import uuid
 
 
 class LocalStore:
@@ -36,6 +41,11 @@ class LocalStore:
         self.db.execute("CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT)")
         self._check_meta("node_id", node_id)
         self._check_meta("motor_id", motor_id)
+        row = self.db.execute("SELECT value FROM meta WHERE key='epoch'").fetchone()
+        if row is None:
+            self.db.execute("INSERT INTO meta VALUES ('epoch', ?)", (uuid.uuid4().hex[:8],))
+            row = self.db.execute("SELECT value FROM meta WHERE key='epoch'").fetchone()
+        self.epoch = row[0]
         self.db.commit()
 
     def _check_meta(self, key, value):

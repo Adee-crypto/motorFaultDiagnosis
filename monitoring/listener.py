@@ -25,8 +25,9 @@ from messaging import TOPIC_ROOT, parse_broker  # noqa: E402
 
 
 class Listener:
-    def __init__(self, show_json=False):
+    def __init__(self, show_json=False, show_heartbeats=False):
         self.show_json = show_json
+        self.show_heartbeats = show_heartbeats
         self.last_seq = {}
         self.count = {}
 
@@ -50,6 +51,17 @@ class Listener:
         except ValueError:
             print(f"[{dt.datetime.now():%H:%M:%S}] unreadable message on {msg.topic}")
             return
+        t = f"[{dt.datetime.now():%H:%M:%S}] "
+        if m.get("type") == "heartbeat":
+            if self.show_heartbeats:
+                print(t + (json.dumps(m) if self.show_json else
+                           f"{m['node_id']} ({m.get('motor_id')}) heartbeat: {m.get('state')} "
+                           f"({m.get('runs_done')}/{m.get('runs_per_cycle')}), unsent {m.get('unsent')}"), flush=True)
+            return
+        if m.get("type") == "status":
+            print(t + f"{m['node_id']} ({m.get('motor_id')}) is {m['status'].upper()}: {m.get('reason')}"
+                  f"{'  (kept by the broker from earlier)' if msg.retain else ''}", flush=True)
+            return
         node, seq = m.get("node_id"), m.get("seq")
         note = ""
         last = self.last_seq.get(node)
@@ -71,9 +83,10 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--broker", default="localhost", help="host or host:port (default localhost:1883)")
     ap.add_argument("--json", action="store_true", help="print the raw messages")
+    ap.add_argument("--heartbeats", action="store_true", help="also print heartbeats (every few seconds per node)")
     a = ap.parse_args()
     host, port = parse_broker(a.broker)
-    lis = Listener(a.json)
+    lis = Listener(a.json, a.heartbeats)
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id="listener")
 
     def on_connect(c, u, f, rc, p):
