@@ -58,6 +58,10 @@ class Listener:
                            f"{m['node_id']} ({m.get('motor_id')}) heartbeat: {m.get('state')} "
                            f"({m.get('runs_done')}/{m.get('runs_per_cycle')}), unsent {m.get('unsent')}"), flush=True)
             return
+        if m.get("type") == "resend_reply":
+            print(t + f"{m['node_id']} ({m.get('motor_id')}) no longer has messages {m.get('unavailable')}: {m.get('reason')}",
+                  flush=True)
+            return
         if m.get("type") == "status":
             print(t + f"{m['node_id']} ({m.get('motor_id')}) is {m['status'].upper()}: {m.get('reason')}"
                   f"{'  (kept by the broker from earlier)' if msg.retain else ''}", flush=True)

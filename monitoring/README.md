@@ -117,8 +117,7 @@ How it works
 - **Server offline:** the server keeps a lasting session with the broker (client id
   `monitor-server`, clean session off), so Mosquitto keeps its messages while it's away and hands
   them over when it reconnects.
-- **Known gap, fixed in step 5:** if the broker itself loses queued messages, the node has already
-  marked them sent. The server sees the missing numbers but can't get them back yet.
+- **Messages lost at the broker:** recovered from step 5 on, by asking the node to resend them.
 - `listener.py` from step 2 still works next to the server, as a live view of the messages.
 
 | File | What it does |
@@ -174,5 +173,44 @@ Changes to existing files: `messaging.py` (heartbeat, last will, online/offline)
 `server/server.py` (watchdog, `/events`, `--timeout`), `status.py` (status column, `--events`,
 `--watch`), `listener.py` (shows online/offline; `--heartbeats` to show heartbeats).
 
+## Step 5: store-and-forward (done)
+
+No result is lost for good without the system knowing about it.
+
+- **Backlog:** results a node couldn't send (broker down, network cut, a crash just after saving)
+  stay in its store as "not sent". As soon as the connection is back, and when the node starts,
+  it sends them, oldest first, before new results. At the end of a run it keeps trying for
+  10 s (`--flush-wait`); anything still unsent waits for the next run.
+- **Resend requests:** the server knows each node's message numbers. Every 20 s, for every online
+  node with gaps, it asks the node (`control/<node_id>/resend`) to send those numbers again. This
+  recovers messages that reached the broker but never reached the server, for example sent while
+  the server was down and not kept by the broker. The first request comes ~10 s after a node comes
+  online, so its own backlog arrives first. A resent message that had arrived after all is ignored
+  as a duplicate.
+- **Lost for good:** if the node no longer has a number (its store was wiped or replaced), it says
+  so. The server records those numbers once, with a "lost for good" event, and stops asking.
+- **One program per node:** a node locks its store while it runs. A second program with the same
+  `--node-id` on the same computer refuses to start: "node-2 is already running on this computer".
+- **Duplicate node names:** every run of a node program has its own id. If two programs report under
+  one node name (e.g. on two computers), the server records one "duplicate node id" event instead of
+  the connection lost / online flip-flop seen in step 4.
+
+```
+python monitoring/status.py --nodes --events     # per node: unsent, missing (asked for), lost for good
+```
+
+| Situation | What happens |
+|---|---|
+| Broker down while the node works | results kept, then sent in order when the broker is back |
+| Server down (broker doesn't keep its messages) | server sees the gap with the next message, asks, node resends |
+| Node crashed after saving, before sending | sent when the node starts again |
+| Part of a node's store wiped | the rest is resent; the missing part is recorded as lost for good |
+| Second program with the same node id | same computer: refused; elsewhere: one "duplicate node id" event |
+
+Changes to existing files: `local_store.py` (lock, fetch by number), `messaging.py` (run id,
+reconnect signal, resend requests on `control/<node_id>/resend`), `node.py` (backlog, answering
+requests, `--flush-wait`), `server/central_store.py` and `server/server.py` (requests, lost for good,
+duplicate names), `status.py` and `listener.py` (show the new information).
+
 ## Coming next
-5. Store-and-forward  6. Dashboard  7. One-command startup  8. Security  9. Cloud
+6. Dashboard  7. One-command startup  8. Security  9. Cloud

@@ -23,16 +23,46 @@ a random id made when the file is created. Every message carries it, and
 its msg_id is "<node_id>-<epoch>-<seq>". If the file is ever deleted or a
 device is replaced, numbering restarts at 1 under a new epoch, so new
 messages can never be mistaken for old ones (step 4).
+
+Lock (step 5): a node holds a lock on "<file>.lock" while it runs, so a
+second program can't use the same store at the same time (two programs
+with one store would hand out the same message numbers twice). The
+operating system releases the lock when the program ends, even after a
+crash. Read-only tools (show_store.py) open the store without the lock.
 """
 import json
 import os
 import sqlite3
 import uuid
 
+if os.name == "nt":
+    import msvcrt
+else:
+    import fcntl
+
+
+class StoreInUse(RuntimeError):
+    """another program is already using this store"""
+
+
+def _lock(path):
+    fh = open(path, "a+")
+    try:
+        if os.name == "nt":
+            fh.seek(0)
+            msvcrt.locking(fh.fileno(), msvcrt.LK_NBLCK, 1)
+        else:
+            fcntl.flock(fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        fh.close()
+        raise StoreInUse(path)
+    return fh
+
 
 class LocalStore:
-    def __init__(self, path, node_id, motor_id):
+    def __init__(self, path, node_id, motor_id, lock=False):
         os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+        self._lockfile = _lock(path + ".lock") if lock else None
         self.db = sqlite3.connect(path)
         self.db.execute("PRAGMA journal_mode=WAL")          # safe if the node is killed mid-write
         self.db.execute("""CREATE TABLE IF NOT EXISTS messages (
@@ -81,5 +111,13 @@ class LocalStore:
         self.db.execute("UPDATE messages SET sent=1 WHERE seq=?", (seq,))
         self.db.commit()
 
+    def get(self, seq):
+        """one stored message by number, or None if this store doesn't have it"""
+        row = self.db.execute("SELECT body FROM messages WHERE seq=?", (seq,)).fetchone()
+        return json.loads(row[0]) if row else None
+
     def close(self):
         self.db.close()
+        if self._lockfile:
+            self._lockfile.close()
+            self._lockfile = None

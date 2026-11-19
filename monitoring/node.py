@@ -26,6 +26,12 @@ What it does
      doing) every few seconds, and the broker holds a "last will" that
      announces the node offline if its connection dies without a goodbye
      (messaging.py). The server uses both to spot failed nodes (step 4).
+  7. Store-and-forward (step 5): results that could not be sent (broker
+     down, network cut, crash before sending) are sent automatically, oldest
+     first, as soon as the connection is back. When the server asks for
+     message numbers it is missing, the node sends them again from its
+     store, or says it no longer has them. Only one program can use a
+     node's store at a time (it is locked while the node runs).
 
 The diagnosis itself is the unchanged code in the folder above
 (predict_motor.py, ml/predict_ml.py, fault_feature_extraction.py), so a
@@ -41,6 +47,7 @@ Options
   --broker      MQTT broker as host or host:port (e.g. localhost); without it
                 the node only saves locally, as in step 1
   --heartbeat   seconds between heartbeats (default 5)
+  --flush-wait  at the end, seconds to keep trying to send unsent results (default 10)
   --fail-after, --fail-mode   for testing failure detection: after this many
                 seconds, either "crash" (the program dies at once, no goodbye)
                 or "hang" (it freezes: stays connected but stops working and
@@ -69,7 +76,7 @@ import fault_feature_extraction as F          # noqa: E402
 import predict_motor as PM                    # noqa: E402  hand-found triggers
 import predict_ml as PML                      # noqa: E402  ML-found triggers
 from process_fault import FALLBACK_FS, CHANNEL_MAP, SPEED_LABELS  # noqa: E402
-from local_store import LocalStore            # noqa: E402
+from local_store import LocalStore, StoreInUse  # noqa: E402
 from messaging import Publisher               # noqa: E402
 
 warnings.filterwarnings("ignore")
@@ -114,11 +121,16 @@ class SensorReplay:
 
 class Node:
     def __init__(self, node_id, motor_id, data_dir, load, store_path, realtime=False, speed=1.0, broker=None,
-                 heartbeat=5.0, fail_after=None, fail_mode=None):
+                 heartbeat=5.0, fail_after=None, fail_mode=None, flush_wait=10.0):
         self.node_id, self.motor_id, self.load = node_id, motor_id, load
         self.realtime, self.speed = realtime, speed
         self.files = self._find_runs(data_dir, load)
-        self.store = LocalStore(store_path, node_id, motor_id)
+        try:
+            self.store = LocalStore(store_path, node_id, motor_id, lock=True)
+        except StoreInUse:
+            sys.exit(f"{node_id} is already running on this computer (its store {store_path} is in use). "
+                     f"Stop the other one first, or use a different --node-id.")
+        self.flush_wait = flush_wait
         self.seq = self.store.next_seq()
         self.healthy = PM.read_calibration(
             os.path.join(ROOT, f"trigger_calibration_final_load{load}.json"))["healthy_reference"]
@@ -156,12 +168,54 @@ class Node:
         self.seq += 1
         self.unsent_count += 1
         if self.publisher:
-            if self.publisher.send(msg):
-                self.store.mark_sent(msg["seq"])
-                self.unsent_count -= 1
-            else:
-                self.log(f"message #{msg['seq']} not sent; kept locally")
+            self._service()                       # sends the backlog first, then this one
+            if self.unsent_count:
+                self.log(f"message #{msg['seq']} not sent; kept locally ({self.unsent_count} waiting)")
         return msg
+
+    # ------------------------------------------------ store-and-forward (step 5)
+    def _service(self):
+        """send unsent results (oldest first) and answer the server's resend requests;
+        main thread only, because it uses the store"""
+        if not self.publisher or not self.publisher.connected.is_set():
+            return
+        self.publisher.reconnected.clear()
+        if self.unsent_count:
+            sent = []
+            for m in self.store.unsent():
+                if not self.publisher.send(m):
+                    break
+                self.store.mark_sent(m["seq"])
+                sent.append(m["seq"])
+            self.unsent_count = len(self.store.unsent())
+            older = [q for q in sent if q < self.seq - 1]
+            if older:
+                self.log(f"sent backlog: {len(older)} result(s) kept from earlier ({_ranges(older)})")
+        while not self.publisher.requests.empty():
+            self._answer(self.publisher.requests.get())
+
+    def _answer(self, req):
+        seqs = sorted(set(int(q) for q in req.get("seqs", [])))
+        if req.get("epoch", "") != self.store.epoch:
+            self.publisher.reply({"epoch": req.get("epoch", ""), "unavailable": seqs,
+                                  "reason": "the node no longer has that store (it was replaced or wiped)"})
+            self.log(f"server asked for {len(seqs)} message(s) from an old store (epoch {req.get('epoch')}): "
+                     f"told it they are gone")
+            return
+        resent, gone = [], []
+        for q in seqs:
+            m = self.store.get(q)
+            if m is None:
+                gone.append(q)
+            elif self.publisher.send(m):
+                self.store.mark_sent(q)
+                resent.append(q)
+        if gone:
+            self.publisher.reply({"epoch": self.store.epoch, "unavailable": gone,
+                                  "reason": "not in the node's store"})
+        self.unsent_count = len(self.store.unsent())
+        self.log(f"server asked for {len(seqs)} missing message(s): resent {_ranges(resent) or 'none'}"
+                 + (f", no longer have {_ranges(gone)}" if gone else ""))
 
     # ------------------------------------------------ failure detection (step 4)
     def _heartbeat_loop(self):
@@ -217,6 +271,7 @@ class Node:
                      f"{'FAULTY' if faulty else 'healthy level'} (accel1 {a1:.1f}x, mic {mic:.1f}x)")
             self.runs_done += 1
             self._wait_if_frozen()
+            self._service()
             if self.stop:
                 return False
 
@@ -246,6 +301,9 @@ class Node:
         if self.publisher:
             threading.Thread(target=self._heartbeat_loop, daemon=True).start()
             self.log(f"heartbeat every {self.heartbeat_s:g} s")
+            if self.unsent_count:
+                self.log(f"{self.unsent_count} result(s) from earlier not sent yet; sending them first")
+                self._service()
         if self.fail_mode:
             t = threading.Timer(self.fail_after, self._inject_failure)
             t.daemon = True
@@ -255,12 +313,32 @@ class Node:
             if not self.run_cycle(c):
                 break
             c += 1
+        if self.publisher and not self.frozen:
+            deadline = time.monotonic() + self.flush_wait     # last chance to deliver the backlog
+            while self.unsent_count and time.monotonic() < deadline:
+                self._service()
+                time.sleep(0.5)
+            self._service()
         unsent = len(self.store.unsent())
-        self.log(("stopped" if self.stop else "finished") + (f"; {unsent} message(s) not sent" if unsent else ""))
+        self.log(("stopped" if self.stop else "finished") + (f"; {unsent} message(s) not sent, kept for next time"
+                                                              if unsent else ""))
         self._hb_stop.set()
         if self.publisher:
             self.publisher.close("stopped by user" if self.stop else "finished")
         self.store.close()
+
+
+def _ranges(nums):
+    """[1,2,3,7] -> '#1-#3, #7'"""
+    out, nums = [], sorted(nums)
+    i = 0
+    while i < len(nums):
+        j = i
+        while j + 1 < len(nums) and nums[j + 1] == nums[j] + 1:
+            j += 1
+        out.append(f"#{nums[i]}" if i == j else f"#{nums[i]}-#{nums[j]}")
+        i = j + 1
+    return ", ".join(out)
 
 
 def main():
@@ -275,6 +353,8 @@ def main():
     ap.add_argument("--speed", type=float, default=1.0)
     ap.add_argument("--broker", help="MQTT broker, host or host:port (e.g. localhost)")
     ap.add_argument("--heartbeat", type=float, default=5.0, help="seconds between heartbeats (default 5)")
+    ap.add_argument("--flush-wait", type=float, default=10.0,
+                    help="at the end, seconds to keep trying to send unsent results (default 10)")
     ap.add_argument("--fail-after", type=float, help="TEST: seconds until a simulated failure")
     ap.add_argument("--fail-mode", choices=["crash", "hang"], help="TEST: crash = die at once; hang = freeze")
     a = ap.parse_args()
@@ -282,7 +362,7 @@ def main():
     if (a.fail_after is None) != (a.fail_mode is None):
         ap.error("--fail-after and --fail-mode go together")
     node = Node(a.node_id, a.motor_id, a.data, a.load, store, a.realtime, a.speed, a.broker,
-                a.heartbeat, a.fail_after, a.fail_mode)
+                a.heartbeat, a.fail_after, a.fail_mode, a.flush_wait)
 
     def on_stop(*_):          # Ctrl+C: finish cleanly, keep what is already saved
         node.stop = True

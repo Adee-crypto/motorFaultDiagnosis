@@ -24,6 +24,17 @@ Node states (step 4)
 A motor whose node is not online has status UNKNOWN: its last result is
 still shown, with its time, but never as the current status.
 
+Store-and-forward (step 5)
+  missing     message numbers below a node's highest one that never arrived;
+              the server asks the node for them (requests_due)
+  lost        numbers the node says it no longer has: recorded once, with an
+              event, and no longer asked for
+  run_id      each run of a node program has its own id. Heartbeats from two
+              runs alternating under one node name mean two programs share a
+              name: one "duplicate node id" event (at most once a minute).
+              A status message from an earlier run (e.g. its late "last will")
+              is ignored, so it can't mark the current run offline.
+
 All writes go through one lock, because the MQTT thread writes while the
 web interface reads.
 """
@@ -68,7 +79,9 @@ class CentralStore:
         have = {r[1] for r in self.db.execute("PRAGMA table_info(nodes)")}
         for col, kind in (("motor_id", "TEXT"), ("state", "TEXT"), ("state_since", "TEXT"), ("reason", "TEXT"),
                           ("last_heartbeat", "TEXT"), ("last_hb_epoch", "REAL"), ("activity", "TEXT"),
-                          ("epoch", "TEXT DEFAULT ''"), ("epoch_started", "TEXT")):
+                          ("epoch", "TEXT DEFAULT ''"), ("epoch_started", "TEXT"),
+                          ("run_id", "TEXT"), ("prev_run_id", "TEXT"), ("dup_reported", "REAL"),
+                          ("lost", "TEXT DEFAULT '[]'"), ("last_request", "REAL"), ("epochs", "TEXT DEFAULT '[]'")):
             if col not in have:
                 self.db.execute(f"ALTER TABLE nodes ADD COLUMN {col} {kind}")
         if "epoch" not in {r[1] for r in self.db.execute("PRAGMA table_info(messages)")}:
@@ -91,8 +104,15 @@ class CentralStore:
             self._ensure_node(m["node_id"], m["motor_id"])
             self.restart_event = None
             if new:
-                node = self.db.execute("SELECT epoch, epoch_started FROM nodes WHERE node_id = ?", (m["node_id"],)).fetchone()
-                if (node["epoch"] or "") != epoch and (node["epoch_started"] or "") <= m["created_at"]:
+                node = self.db.execute("SELECT epoch, epoch_started, epochs FROM nodes WHERE node_id = ?",
+                                       (m["node_id"],)).fetchone()
+                seen = set(json.loads(node["epochs"] or "[]"))
+                if epoch not in seen:
+                    self.db.execute("UPDATE nodes SET epochs = ? WHERE node_id = ?",
+                                    (json.dumps(sorted(seen | {epoch})), m["node_id"]))
+                # only a never-seen epoch counts as a restart; an epoch seen before (e.g. a second
+                # program wrongly using the same node name) must not flip the numbering back and forth
+                if (node["epoch"] or "") != epoch and epoch not in seen and (node["epoch_started"] or "") <= m["created_at"]:
                     # a fresh local store on the node: numbering starts again under a new epoch
                     if node["epoch"]:     # not for a node upgrading from step 3 (no epoch before)
                         ev = {"at": now_utc(), "node_id": m["node_id"], "motor_id": m["motor_id"],
@@ -147,31 +167,106 @@ class CentralStore:
         if motor_id:
             self.db.execute("UPDATE nodes SET motor_id = ? WHERE node_id = ?", (motor_id, node_id))
 
+    def _check_run(self, node_id, motor_id, run_id):
+        """track which program run speaks for a node; returns a 'duplicate node id' event or None"""
+        if not run_id:
+            return None
+        r = self.db.execute("SELECT run_id, prev_run_id, dup_reported FROM nodes WHERE node_id = ?", (node_id,)).fetchone()
+        if r["run_id"] == run_id:
+            return None
+        ev = None
+        if r["prev_run_id"] == run_id and time.time() - (r["dup_reported"] or 0) > 60:
+            # a run we had already seen replaced is talking again: two programs share this name
+            ev = {"at": now_utc(), "node_id": node_id, "motor_id": motor_id, "event": "duplicate node id",
+                  "detail": f"two programs are reporting as {node_id} (runs {r['run_id']} and {run_id}); "
+                            f"give each node its own --node-id"}
+            self.db.execute("INSERT INTO events (at, node_id, motor_id, event, detail) VALUES (?, ?, ?, ?, ?)",
+                            tuple(ev.values()))
+            self.db.execute("UPDATE nodes SET dup_reported = ? WHERE node_id = ?", (time.time(), node_id))
+        self.db.execute("UPDATE nodes SET prev_run_id = run_id, run_id = ? WHERE node_id = ?", (run_id, node_id))
+        return ev
+
     def heartbeat(self, hb):
-        """a heartbeat arrived: the node is online; returns an event if that is news"""
+        """a heartbeat arrived: the node is online; returns the events it causes"""
         with self.lock:
             self._ensure_node(hb["node_id"], hb.get("motor_id"))
+            dup = self._check_run(hb["node_id"], hb.get("motor_id"), hb.get("run_id"))
             info = {k: hb.get(k) for k in ("state", "cycle", "runs_done", "runs_per_cycle", "unsent", "uptime_s", "interval_s")}
             self.db.execute("UPDATE nodes SET last_heartbeat = ?, last_hb_epoch = ?, activity = ? WHERE node_id = ?",
                             (now_utc(), time.time(), json.dumps(info), hb["node_id"]))
             ev = self._set_state(hb["node_id"], hb.get("motor_id"), "online", "heartbeats arriving",
                                  "online", "heartbeats arriving")
+            if ev:
+                self._first_request_soon(hb["node_id"])
             self.db.commit()
-        return ev
+        return [e for e in (dup, ev) if e]
 
     def node_status(self, st):
         """a status message: "online" when the node connects, "offline" on goodbye or last will"""
         with self.lock:
             self._ensure_node(st["node_id"], st.get("motor_id"))
+            cur = self.db.execute("SELECT run_id FROM nodes WHERE node_id = ?", (st["node_id"],)).fetchone()[0]
+            if st["status"] == "offline" and st.get("run_id") and cur and st["run_id"] != cur:
+                return None      # an earlier run's goodbye or last will: the current run is unaffected
             if st["status"] == "online":
+                self._check_run(st["node_id"], st.get("motor_id"), st.get("run_id"))
                 self.db.execute("UPDATE nodes SET last_hb_epoch = ? WHERE node_id = ?", (time.time(), st["node_id"]))
                 ev = self._set_state(st["node_id"], st.get("motor_id"), "online", "connected", "online", "connected")
+                if ev:
+                    self._first_request_soon(st["node_id"])
             elif st.get("reason") == "connection lost":
                 ev = self._set_state(st["node_id"], st.get("motor_id"), "offline", "connection lost",
                                      "connection lost", "broker announced the node's last will (no goodbye)")
             else:
                 ev = self._set_state(st["node_id"], st.get("motor_id"), "stopped", st.get("reason"),
                                      "stopped", f"node said goodbye: {st.get('reason')}")
+            self.db.commit()
+        return ev
+
+    # ------------------------------------------------ store-and-forward (step 5)
+    REQUEST_EVERY = 20.0      # seconds between resend requests to one node
+
+    def _first_request_soon(self, node_id):
+        """a node just came online: give it ~10 s to send its own backlog before asking"""
+        self.db.execute("UPDATE nodes SET last_request = ? WHERE node_id = ?",
+                        (time.time() - self.REQUEST_EVERY + 10, node_id))
+
+    def _missing(self, r):
+        have = {q for (q,) in self.db.execute("SELECT seq FROM messages WHERE node_id = ? AND epoch = ?",
+                                              (r["node_id"], r["epoch"] or ""))}
+        lost = set(json.loads(r["lost"] or "[]"))
+        return [q for q in range(1, (r["max_seq"] or 0) + 1) if q not in have and q not in lost]
+
+    def requests_due(self, limit=200):
+        """online nodes with missing messages whose last request is old enough: [(node_id, epoch, seqs)]"""
+        out, now = [], time.time()
+        with self.lock:
+            for r in self.db.execute("SELECT * FROM nodes WHERE state = 'online'").fetchall():
+                if now - (r["last_request"] or 0) < self.REQUEST_EVERY:
+                    continue
+                miss = self._missing(r)
+                if miss:
+                    out.append((r["node_id"], r["epoch"] or "", miss[:limit]))
+                    self.db.execute("UPDATE nodes SET last_request = ? WHERE node_id = ?", (now, r["node_id"]))
+            self.db.commit()
+        return out
+
+    def mark_lost(self, reply):
+        """the node says it no longer has these numbers: record them once, stop asking"""
+        with self.lock:
+            r = self.db.execute("SELECT * FROM nodes WHERE node_id = ?", (reply["node_id"],)).fetchone()
+            if r is None or (reply.get("epoch", "") != (r["epoch"] or "")):
+                return None          # about an older store: those numbers are not counted as missing anyway
+            lost = set(json.loads(r["lost"] or "[]"))
+            new = sorted(set(int(q) for q in reply.get("unavailable", [])) - lost)
+            if not new:
+                return None
+            self.db.execute("UPDATE nodes SET lost = ? WHERE node_id = ?",
+                            (json.dumps(sorted(lost | set(new))), reply["node_id"]))
+            ev = {"at": now_utc(), "node_id": reply["node_id"], "motor_id": reply.get("motor_id"),
+                  "event": "lost for good", "detail": f"messages {_ranges(new)}: {reply.get('reason')}"}
+            self.db.execute("INSERT INTO events (at, node_id, motor_id, event, detail) VALUES (?, ?, ?, ?, ?)",
+                            tuple(ev.values()))
             self.db.commit()
         return ev
 
@@ -258,14 +353,14 @@ class CentralStore:
             rows = self.db.execute("SELECT * FROM nodes ORDER BY node_id").fetchall()
             out = []
             for r in rows:
-                have = {s for (s,) in self.db.execute("SELECT seq FROM messages WHERE node_id = ? AND epoch = ?",
-                                                      (r["node_id"], r["epoch"] or ""))}
-                missing = [s for s in range(1, r["max_seq"] + 1) if s not in have]
+                missing = self._missing(r)
+                lost = json.loads(r["lost"] or "[]")
                 out.append({"node_id": r["node_id"], "motor_id": r["motor_id"], "state": r["state"] or "no heartbeat yet",
                             "reason": r["reason"], "state_since": r["state_since"], "last_heartbeat": r["last_heartbeat"],
                             "activity": json.loads(r["activity"]) if r["activity"] else None,
                             "epoch": r["epoch"], "received": r["received"], "duplicates_ignored": r["duplicates"],
                             "highest_seq": r["max_seq"], "missing_seq": _ranges(missing), "missing_count": len(missing),
+                            "lost_seq": _ranges(lost), "lost_count": len(lost), "run_id": r["run_id"],
                             "last_seen": r["last_seen"]})
         return out
 

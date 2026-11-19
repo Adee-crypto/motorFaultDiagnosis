@@ -21,13 +21,19 @@ Two jobs in one program:
    "stopped". A motor whose node is not online gets status UNKNOWN.
    Every change is logged as an event.
 
-3. Answers questions over HTTP (a web API), as JSON:
+3. Recovers missing messages (step 5): every 20 s, for each online node
+   with gaps in its message numbers, it asks the node to send them again
+   (control/<node_id>/resend). Numbers the node no longer has are recorded
+   as "lost for good" and not asked for again. It also reports a "duplicate
+   node id" when two programs report under one node name.
+
+4. Answers questions over HTTP (a web API), as JSON:
       GET /motors                    every motor: status (HEALTHY / FAULTY / CHECKING / UNKNOWN),
                                      node state, latest run and latest verdict
       GET /motors/{motor_id}         one motor
       GET /motors/{motor_id}/history recent messages of one motor (?type=verdict&limit=20)
       GET /nodes                     every node: messages received, duplicates ignored,
-                                     missing message numbers
+                                     missing and lost message numbers
       GET /events                    node state changes, newest first (?node_id=node-1&limit=20)
       GET /health                    is the server up and connected to the broker?
    Open http://localhost:8000 (or /docs) in a browser to try them.
@@ -49,7 +55,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.dirname(HERE))
 from central_store import CentralStore, now_utc   # noqa: E402
-from messaging import TOPIC_ROOT, parse_broker    # noqa: E402
+from messaging import TOPIC_ROOT, CONTROL_ROOT, parse_broker    # noqa: E402
 
 REQUIRED = ("msg_id", "node_id", "motor_id", "seq", "type", "created_at", "payload")
 
@@ -83,14 +89,21 @@ class Receiver:
                 continue        # no broker: we can't hear anyone, so don't blame the nodes
             for ev in self.store.check_timeouts(self.timeout):
                 self.report(ev)
+            for node_id, epoch, seqs in self.store.requests_due():
+                self.client.publish(f"{CONTROL_ROOT}/{node_id}/resend", json.dumps({"type": "resend_request", "epoch": epoch, "seqs": seqs}), qos=1)
+                print(f"[server] asked {node_id} to resend {len(seqs)} missing message(s): {_short(seqs)}", flush=True)
 
     @staticmethod
-    def report(ev):
-        if not ev:
-            return
-        effect = "status UNKNOWN" if ev["event"] in ("went silent", "connection lost", "stopped") else "status live again"
-        print(f"[server] EVENT {ev['node_id']} ({ev['motor_id']}): {ev['event'].upper()}: {ev['detail']} "
-              f"-> {ev['motor_id']} {effect}", flush=True)
+    def report(evs):
+        for ev in (evs if isinstance(evs, list) else [evs]):
+            if not ev:
+                continue
+            effect = {"went silent": f" -> {ev['motor_id']} status UNKNOWN",
+                      "connection lost": f" -> {ev['motor_id']} status UNKNOWN",
+                      "stopped": f" -> {ev['motor_id']} status UNKNOWN",
+                      "online": f" -> {ev['motor_id']} status live again"}.get(ev["event"], "")
+            print(f"[server] EVENT {ev['node_id']} ({ev['motor_id']}): {ev['event'].upper()}: {ev['detail']}{effect}",
+                  flush=True)
 
     def stop(self):
         self.closing = True
@@ -121,6 +134,9 @@ class Receiver:
             if m.get("type") == "status":
                 self.report(self.store.node_status(m))
                 return
+            if m.get("type") == "resend_reply":
+                self.report(self.store.mark_lost(m))
+                return
             if not all(k in m for k in REQUIRED):
                 raise ValueError("missing fields")
         except ValueError as e:
@@ -138,6 +154,18 @@ class Receiver:
                 else m["type"])
         print(f"[server] {m['node_id']} #{m['seq']:<4} {m['motor_id']:10s} {what}"
               f"{'  (duplicate, ignored)' if result == 'duplicate' else ''}", flush=True)
+
+
+def _short(seqs):
+    """[1,2,3,7] -> '#1-#3, #7'"""
+    out, i = [], 0
+    while i < len(seqs):
+        j = i
+        while j + 1 < len(seqs) and seqs[j + 1] == seqs[j] + 1:
+            j += 1
+        out.append(f"#{seqs[i]}" if i == j else f"#{seqs[i]}-#{seqs[j]}")
+        i = j + 1
+    return ", ".join(out)
 
 
 def make_app(store, receiver):

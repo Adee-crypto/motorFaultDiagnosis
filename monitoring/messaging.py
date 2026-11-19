@@ -13,7 +13,9 @@ Topics used:
     monitor/<node_id>/verdict        after every full cycle         (QoS 1)
     monitor/<node_id>/heartbeat      "I'm alive", every few seconds (QoS 0)
     monitor/<node_id>/status         "online" / "offline", kept by the broker (retained)
-Subscribing to  monitor/#  receives everything.
+    monitor/<node_id>/resend_reply   answer to a resend request: numbers it no longer has (step 5)
+    control/<node_id>/resend         server -> node: "please send these message numbers again" (step 5)
+Subscribing to  monitor/#  receives everything the nodes send.
 
 Results are sent with QoS 1 ("at least once"): the broker confirms each
 one, and the node marks it as sent only after that confirmation.
@@ -28,14 +30,27 @@ Failure detection (step 4):
     node. On a normal stop the node says "offline, stopped" itself.
   - status messages are "retained": the broker keeps the latest one per
     node and gives it to anyone who subscribes later, e.g. a restarted server.
+
+Store-and-forward (step 5):
+  - run_id: a random id for every run of the node program, sent with its
+    heartbeats and status, so the server can tell a restart from two
+    programs using the same node name at once.
+  - `reconnected` is set each time the connection comes (back) up, so the
+    node knows to send its backlog of unsent results.
+  - resend requests from the server arrive on control/<node_id>/resend and
+    are handed to the node through `requests` (a queue), because the node
+    reads its store only from its main thread.
 """
 import datetime as dt
 import json
+import queue
 import threading
+import uuid
 
 import paho.mqtt.client as mqtt
 
 TOPIC_ROOT = "monitor"
+CONTROL_ROOT = "control"
 KEEPALIVE = 10   # seconds; the broker notices a silently dead connection after ~1.5x this
 
 
@@ -60,10 +75,14 @@ class Publisher:
         self.node_id, self.motor_id = client_id, motor_id
         self.log = log
         self.connected = threading.Event()
+        self.reconnected = threading.Event()
+        self.requests = queue.Queue()
+        self.run_id = uuid.uuid4().hex[:6]
         self.closing = False
         self.client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=client_id)
         self.client.on_connect = self._on_connect
         self.client.on_disconnect = self._on_disconnect
+        self.client.on_message = self._on_message
         self.client.reconnect_delay_set(min_delay=1, max_delay=10)
         # last will: published by the broker if this connection dies without a goodbye
         self.client.will_set(self._status_topic(), self._status("offline", "connection lost"), qos=1, retain=True)
@@ -77,13 +96,26 @@ class Publisher:
 
     def _status(self, status, reason):
         return json.dumps({"type": "status", "node_id": self.node_id, "motor_id": self.motor_id,
-                           "status": status, "reason": reason, "at": now_utc()})
+                           "run_id": self.run_id, "status": status, "reason": reason, "at": now_utc()})
 
     def _on_connect(self, client, userdata, flags, reason_code, properties):
         if not reason_code.is_failure:
             self.connected.set()
+            self.reconnected.set()
+            client.subscribe(f"{CONTROL_ROOT}/{self.node_id}/resend", qos=1)
             client.publish(self._status_topic(), self._status("online", "connected"), qos=1, retain=True)
             self.log(f"connected to broker {self.host}:{self.port}")
+
+    def _on_message(self, client, userdata, msg):
+        """only real resend requests for this node are passed on; anything else is ignored"""
+        if msg.topic != f"{CONTROL_ROOT}/{self.node_id}/resend":
+            return
+        try:
+            body = json.loads(msg.payload)
+        except ValueError:
+            return
+        if isinstance(body, dict) and body.get("type") == "resend_request" and isinstance(body.get("seqs"), list):
+            self.requests.put(body)
 
     def _on_disconnect(self, client, userdata, flags, reason_code, properties):
         if self.connected.is_set() and not self.closing:
@@ -104,8 +136,16 @@ class Publisher:
     def heartbeat(self, info):
         """fire-and-forget "I'm alive" (QoS 0): a lost heartbeat is simply replaced by the next one"""
         if self.connected.is_set():
-            body = {"type": "heartbeat", "node_id": self.node_id, "motor_id": self.motor_id, "at": now_utc(), **info}
+            body = {"type": "heartbeat", "node_id": self.node_id, "motor_id": self.motor_id, "run_id": self.run_id,
+                    "at": now_utc(), **info}
             self.client.publish(f"{TOPIC_ROOT}/{self.node_id}/heartbeat", json.dumps(body), qos=0)
+
+    def reply(self, body):
+        """answer a resend request (e.g. which numbers this node no longer has)"""
+        if self.connected.is_set():
+            body = {"type": "resend_reply", "node_id": self.node_id, "motor_id": self.motor_id,
+                    "run_id": self.run_id, "at": now_utc(), **body}
+            self.client.publish(f"{TOPIC_ROOT}/{self.node_id}/resend_reply", json.dumps(body), qos=1)
 
     def close(self, reason="stopped"):
         """normal stop: say goodbye, so the broker does not send the last will"""

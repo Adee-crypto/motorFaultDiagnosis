@@ -55,11 +55,13 @@ def show(a):
     for m in unknown:
         print(f"  ! {m['motor_id']}: {m['status_detail']}")
     if a.nodes:
-        print(f"\n{'node':8s} {'state':9s} {'received':>8s} {'dupl.':>6s} {'highest #':>9s} {'unsent':>7s}  missing")
+        print(f"\n{'node':8s} {'state':9s} {'received':>8s} {'dupl.':>6s} {'highest #':>9s} {'unsent':>7s}  "
+              f"{'missing (asked for)':22s} lost for good")
         for n in get(a.server, "/nodes"):
             uns = (n.get("activity") or {}).get("unsent")
             print(f"{n['node_id']:8s} {n['state'][:9]:9s} {n['received']:8d} {n['duplicates_ignored']:6d} "
-                  f"{n['highest_seq']:9d} {('-' if uns is None else uns):>7}  {n['missing_seq'] or '-'}")
+                  f"{n['highest_seq']:9d} {('-' if uns is None else uns):>7}  {(n['missing_seq'] or '-'):22s} "
+                  f"{n.get('lost_seq') or '-'}")
     if a.events:
         print("\nrecent events (newest first)")
         for e in get(a.server, "/events?limit=10"):
