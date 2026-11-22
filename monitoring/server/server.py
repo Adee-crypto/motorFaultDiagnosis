@@ -36,7 +36,12 @@ Two jobs in one program:
                                      missing and lost message numbers
       GET /events                    node state changes, newest first (?node_id=node-1&limit=20)
       GET /health                    is the server up and connected to the broker?
-   Open http://localhost:8000 (or /docs) in a browser to try them.
+   Try them at http://localhost:8000/docs.
+
+5. Shows the dashboard (step 6) at http://localhost:8000: one web page
+   (static/dashboard.html) that reads the API above every 2 seconds and
+   shows every motor at a glance, the alarms, each motor's verdicts and
+   recent runs, the nodes and the events.
 """
 import argparse
 import json
@@ -49,7 +54,7 @@ from typing import Optional
 import paho.mqtt.client as mqtt
 import uvicorn
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import RedirectResponse
+from fastapi.responses import FileResponse
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -170,11 +175,12 @@ def _short(seqs):
 
 def make_app(store, receiver):
     app = FastAPI(title="Motor monitoring server",
-                  description="Central server of the motor-fault monitoring system (step 3).")
+                  description="Central server of the motor-fault monitoring system. The dashboard is at / (step 6); these are the API endpoints it reads.")
 
     @app.get("/", include_in_schema=False)
-    def root():
-        return RedirectResponse("/docs")
+    def dashboard():
+        # the dashboard (step 6): one page that reads the API below every 2 s
+        return FileResponse(os.path.join(HERE, "static", "dashboard.html"), headers={"Cache-Control": "no-store"})
 
     @app.get("/health")
     def health():
@@ -222,7 +228,7 @@ def main():
     receiver.start()
     print(f"[server] database {a.db}", flush=True)
     print(f"[server] a node is offline after {a.timeout:g} s without a heartbeat", flush=True)
-    print(f"[server] web API on http://localhost:{a.port}  (try http://localhost:{a.port}/docs)", flush=True)
+    print(f"[server] dashboard on http://localhost:{a.port}   (API: http://localhost:{a.port}/docs)", flush=True)
     try:
         uvicorn.run(make_app(store, receiver), host="0.0.0.0", port=a.port, log_level="warning")
     finally:

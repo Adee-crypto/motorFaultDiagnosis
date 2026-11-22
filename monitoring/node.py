@@ -168,13 +168,13 @@ class Node:
         self.seq += 1
         self.unsent_count += 1
         if self.publisher:
-            self._service()                       # sends the backlog first, then this one
+            self._service(fresh=True)             # sends the backlog first, then this one
             if self.unsent_count:
                 self.log(f"message #{msg['seq']} not sent; kept locally ({self.unsent_count} waiting)")
         return msg
 
     # ------------------------------------------------ store-and-forward (step 5)
-    def _service(self):
+    def _service(self, fresh=False):
         """send unsent results (oldest first) and answer the server's resend requests;
         main thread only, because it uses the store"""
         if not self.publisher or not self.publisher.connected.is_set():
@@ -188,7 +188,8 @@ class Node:
                 self.store.mark_sent(m["seq"])
                 sent.append(m["seq"])
             self.unsent_count = len(self.store.unsent())
-            older = [q for q in sent if q < self.seq - 1]
+            # the message just created is the newest one; everything sent before it was waiting
+            older = [q for q in sent if q != self.seq - 1] if fresh else sent
             if older:
                 self.log(f"sent backlog: {len(older)} result(s) kept from earlier ({_ranges(older)})")
         while not self.publisher.requests.empty():

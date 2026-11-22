@@ -212,5 +212,36 @@ reconnect signal, resend requests on `control/<node_id>/resend`), `node.py` (bac
 requests, `--flush-wait`), `server/central_store.py` and `server/server.py` (requests, lost for good,
 duplicate names), `status.py` and `listener.py` (show the new information).
 
+## Step 6: dashboard (done)
+
+Open **http://localhost:8000** while the server runs. The API is still at
+http://localhost:8000/docs.
+
+The dashboard is one web page (`server/static/dashboard.html`) that the server
+hands out. It needs no internet. Every 2 seconds it reads `/health`,
+`/motors`, `/nodes` and `/events` and redraws:
+
+- **Annunciator (top row):** one window per motor. It is grey when the motor is
+  healthy, outlined while the first cycle is running (CHECKING), red when the
+  motor is FAULTY and amber when its status is UNKNOWN (node offline). A
+  window flashes until its alarm is acknowledged. Click a window to see that
+  motor's details.
+- **Alarms:** faulty motors, unknown status, the two methods disagreeing, results
+  lost for good, and a duplicate node id. "Acknowledge" stops the flashing; the
+  browser remembers it. A new problem (a different fault, a new outage) flashes
+  again.
+- **Motors:** each node's state, heartbeat age (shown in red when it is late), what
+  it is doing, its progress through the cycle (8 bars) and its last verdict.
+- **Selected motor:** the triggers, ML and combined verdicts; points per fault;
+  a chart of vibration (accel1) and sound (mic) against the healthy level for
+  the last 16 runs, with the fault level at 2×; recent runs; earlier verdicts.
+- **Nodes:** received, highest message number, unsent, missing (being asked
+  for again), lost for good, and repeats ignored.
+- **Events:** every node coming online, going offline or silent, stopping, etc.
+
+If the server stops, a banner says so and the page keeps the last data. If the
+server loses the broker, a banner says the statuses are frozen. A Light/Dark
+button switches the theme.
+
 ## Coming next
-6. Dashboard  7. One-command startup  8. Security  9. Cloud
+7. One-command startup  8. Security  9. Cloud

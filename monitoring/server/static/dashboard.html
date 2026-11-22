@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Motor monitoring</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22%3E%3Crect width=%2216%22 height=%2216%22 rx=%223%22 fill=%22%23d03b3b%22/%3E%3C/svg%3E">
+<style>
+/* ------------------------------------------------------------------
+   Motor monitoring dashboard (step 6)
+   Served by server.py at http://localhost:8000/ . No internet needed:
+   everything (styles, script, charts) is in this one file and it only
+   talks to the server's own API (/health, /motors, /nodes, /events).
+
+   Look: a control-room panel. Grey and calm while everything is normal;
+   colour appears only for something abnormal (red = faulty, amber =
+   status unknown), the way plant control screens are designed. The top
+   row is an annunciator: one window per motor that lights up and
+   flashes until the alarm is acknowledged.
+   ------------------------------------------------------------------ */
+:root {
+  color-scheme: light;
+  --page:      #d9dcde;
+  --surface:   #f4f5f5;
+  --surface-2: #e8eaeb;
+  --ink:       #1d2125;
+  --ink-2:     #4a525a;
+  --ink-3:     #69727a;
+  --rule:      #c2c7cb;
+  --unlit:     #c9cdd0;
+  --unlit-ink: #3e464d;
+
+  --crit:      #d03b3b;   /* faulty */
+  --crit-ink:  #ffffff;
+  --warn:      #fab219;   /* status unknown, node problems */
+  --warn-ink:  #1d2125;
+  --good:      #0ca30c;   /* healthy (shown small, never as a big area) */
+  --check:     #5f7d99;   /* checking: first cycle in progress */
+
+  --series-1:  #2a78d6;   /* accel1 */
+  --series-2:  #eb6834;   /* mic */
+  --bar:       #2a78d6;
+
+  --display: "Bahnschrift", "DIN Alternate", "DIN 2014", "Barlow Semi Condensed", "Roboto Condensed", "Arial Narrow", sans-serif;
+  --body: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page:      #16181a;
+  --surface:   #1e2124;
+  --surface-2: #272b2f;
+  --ink:       #e7e9eb;
+  --ink-2:     #b2b8be;
+  --ink-3:     #8a9299;
+  --rule:      #363b40;
+  --unlit:     #2c3136;
+  --unlit-ink: #c4cad0;
+  --check:     #7f9cb8;
+  --series-1:  #3987e5;
+  --series-2:  #d95926;
+  --bar:       #3987e5;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --page:      #16181a;
+    --surface:   #1e2124;
+    --surface-2: #272b2f;
+    --ink:       #e7e9eb;
+    --ink-2:     #b2b8be;
+    --ink-3:     #8a9299;
+    --rule:      #363b40;
+    --unlit:     #2c3136;
+    --unlit-ink: #c4cad0;
+    --check:     #7f9cb8;
+    --series-1:  #3987e5;
+    --series-2:  #d95926;
+    --bar:       #3987e5;
+  }
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--page);
+  color: var(--ink);
+  font: 15px/1.45 var(--body);
+  font-variant-numeric: tabular-nums;
+}
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--series-1); outline-offset: 2px; }
+
+.wrap { max-width: 1320px; margin: 0 auto; padding: 18px 22px 40px; }
+
+/* ---------- header ---------- */
+.top {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 28px;
+  padding-bottom: 14px;
+}
+.top h1 {
+  margin: 0; font: 600 26px/1.1 var(--display); letter-spacing: .01em;
+  font-stretch: semi-condensed;
+}
+.summary { color: var(--ink-2); display: flex; gap: 18px; flex-wrap: wrap; }
+.summary b { color: var(--ink); font-weight: 600; }
+.conn { margin-left: auto; display: flex; gap: 16px; align-items: center; color: var(--ink-2); font-size: 14px; }
+.dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--ink-3); margin-right: 6px; vertical-align: 1px; }
+.dot.ok { background: var(--good); }
+.dot.bad { background: var(--crit); }
+.iconbtn {
+  border: 1px solid var(--rule); background: var(--surface); border-radius: 4px;
+  padding: 3px 10px; cursor: pointer; font-size: 13px;
+}
+.iconbtn:hover { background: var(--surface-2); }
+
+/* ---------- the annunciator ---------- */
+.annunciator {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 6px;
+  background: var(--ink); padding: 6px; border-radius: 6px;
+}
+:root[data-theme="dark"] .annunciator { background: #0c0d0e; }
+@media (prefers-color-scheme: dark) { :root:where(:not([data-theme="light"])) .annunciator { background: #0c0d0e; } }
+.win {
+  appearance: none; border: 0; text-align: left; cursor: pointer;
+  background: var(--unlit); color: var(--unlit-ink);
+  border-radius: 3px; padding: 10px 12px 9px; min-height: 84px;
+  display: flex; flex-direction: column; justify-content: space-between;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.18);
+}
+.win .name { font: 600 21px/1.05 var(--display); font-stretch: semi-condensed; }
+.win .state { font: 500 13px/1.2 var(--display); letter-spacing: .06em; display: flex; align-items: center; gap: 6px; }
+.win .sub { font-size: 12.5px; opacity: .82; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.win.sel { box-shadow: inset 0 0 0 3px var(--series-1); }
+.win[data-status="HEALTHY"] .state::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--good); }
+.win[data-status="CHECKING"] { background: transparent; color: #c9d1d8; box-shadow: inset 0 0 0 1px #59636c; }
+.win[data-status="CHECKING"].sel { box-shadow: inset 0 0 0 3px var(--series-1); }
+.win[data-status="FAULTY"]  { background: var(--crit); color: var(--crit-ink); }
+.win[data-status="UNKNOWN"] { background: var(--warn); color: var(--warn-ink); }
+/* unacknowledged alarm: the window flashes (ISA-18.2 style) */
+.win.flash { animation: flash 1s steps(1, end) infinite; }
+@keyframes flash { 50% { filter: brightness(.55) saturate(.6); } }
+@media (prefers-reduced-motion: reduce) {
+  .win.flash { animation: none; outline: 4px dashed var(--crit-ink); outline-offset: -8px; }
+}
+.ann-empty { color: #c9d1d8; padding: 22px 14px; grid-column: 1 / -1; }
+
+/* ---------- alarm list ---------- */
+.alarms { margin-top: 14px; }
+.alarms-head { display: flex; align-items: center; gap: 14px; margin-bottom: 6px; }
+.alarms-head h2 { margin: 0; }
+.alarm {
+  display: grid; grid-template-columns: 20px 1fr auto auto; gap: 4px 12px; align-items: baseline;
+  padding: 7px 10px; background: var(--surface); border-left: 4px solid var(--rule);
+  margin-bottom: 4px; border-radius: 0 4px 4px 0;
+}
+.alarm.crit { border-left-color: var(--crit); }
+.alarm.warn { border-left-color: var(--warn); }
+.alarm.note { border-left-color: var(--check); }
+.alarm .ic { font-weight: 700; text-align: center; }
+.alarm.crit .ic { color: var(--crit); }
+.alarm.warn .ic { color: #b07a00; }
+:root[data-theme="dark"] .alarm.warn .ic { color: var(--warn); }
+.alarm .when { color: var(--ink-3); font-size: 13px; white-space: nowrap; }
+.alarm.acked { opacity: .62; }
+.alarm .ack { font-size: 13px; padding: 1px 9px; }
+.calm { color: var(--ink-2); padding: 8px 2px; }
+
+/* ---------- sections ---------- */
+h2 { font: 600 17px/1.2 var(--display); font-stretch: semi-condensed; margin: 0 0 8px; letter-spacing: .01em; }
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 16px; margin-top: 18px; align-items: start; }
+.grid.lower { grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); }
+td b { white-space: nowrap; }
+.panel { background: var(--surface); border-radius: 6px; padding: 14px 16px; }
+.muted { color: var(--ink-3); }
+.small { font-size: 13px; }
+
+/* motor rows */
+.mrow {
+  display: grid; grid-template-columns: 12px 108px 1fr; gap: 2px 12px;
+  padding: 10px 6px; border-top: 1px solid var(--rule); cursor: pointer; align-items: start;
+}
+.mrow:first-of-type { border-top: 0; }
+.mrow:hover { background: var(--surface-2); }
+.mrow.sel { background: var(--surface-2); box-shadow: inset 3px 0 0 var(--series-1); }
+.mrow .lamp { width: 12px; height: 12px; border-radius: 2px; margin-top: 4px; background: var(--unlit); box-shadow: inset 0 0 0 1px var(--rule); }
+.mrow[data-status="FAULTY"] .lamp { background: var(--crit); box-shadow: none; }
+.mrow[data-status="UNKNOWN"] .lamp { background: var(--warn); box-shadow: none; }
+.mrow[data-status="HEALTHY"] .lamp { background: var(--good); box-shadow: none; }
+.mrow[data-status="CHECKING"] .lamp { background: transparent; box-shadow: inset 0 0 0 2px var(--check); }
+.mrow .mname { font: 600 17px/1.2 var(--display); font-stretch: semi-condensed; }
+.mrow .mstat { font-size: 12.5px; letter-spacing: .05em; color: var(--ink-2); }
+.mrow .line { color: var(--ink-2); font-size: 14px; }
+.mrow .line b { color: var(--ink); font-weight: 600; }
+.cyclebar { display: flex; gap: 2px; margin: 5px 0 2px; max-width: 260px; }
+.cyclebar i { flex: 1; height: 7px; background: var(--unlit); border-radius: 1px; }
+.cyclebar i.done { background: var(--ink-3); }
+.cyclebar i.done.f { background: var(--ink-2); }
+
+/* detail */
+.detail-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin-bottom: 4px; }
+.detail-head h2 { font-size: 22px; margin: 0; }
+.verdict-big { font: 600 20px/1.25 var(--display); font-stretch: semi-condensed; margin: 8px 0 2px; }
+.verdict-big .conf { font: 400 15px var(--body); color: var(--ink-2); }
+.three { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 10px 0 14px; }
+.three div { background: var(--surface-2); border-radius: 4px; padding: 7px 10px; }
+.three .k { font-size: 12.5px; color: var(--ink-3); }
+.three .v { font-weight: 600; }
+.banner {
+  padding: 8px 12px; border-radius: 4px; margin: 8px 0; background: var(--surface-2);
+  border-left: 4px solid var(--warn);
+}
+.banner.crit { border-left-color: var(--crit); }
+.sec { margin-top: 16px; }
+.sec h3 { font: 600 15px/1.2 var(--display); font-stretch: semi-condensed; margin: 0 0 6px; }
+svg text { fill: var(--ink-2); font: 12px var(--body); }
+svg .val { fill: var(--ink); font-weight: 600; }
+.legend { display: flex; gap: 16px; font-size: 13px; color: var(--ink-2); margin-bottom: 2px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+
+/* tables */
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th { text-align: left; font-weight: 600; color: var(--ink-2); padding: 5px 8px; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+td { padding: 5px 8px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+td.n, th.n { text-align: right; }
+tr:last-child td { border-bottom: 0; }
+.tag { display: inline-block; padding: 0 7px; border-radius: 3px; font-size: 12.5px; background: var(--surface-2); white-space: nowrap; }
+.tag.online { box-shadow: inset 3px 0 0 var(--good); }
+.tag.offline, .tag.stopped { box-shadow: inset 3px 0 0 var(--warn); }
+.bad-n { color: var(--crit); font-weight: 600; }
+.scroll { overflow-x: auto; }
+.events { max-height: 380px; overflow-y: auto; }
+.ev-kind { white-space: nowrap; font-weight: 600; }
+
+/* tooltip */
+.tip {
+  position: fixed; pointer-events: none; z-index: 10; background: var(--ink); color: var(--surface);
+  padding: 6px 9px; border-radius: 4px; font-size: 12.5px; line-height: 1.4; max-width: 260px; display: none;
+}
+
+/* server unreachable */
+.offline-banner {
+  display: none; background: var(--warn); color: var(--warn-ink); padding: 10px 14px; border-radius: 4px; margin-bottom: 12px;
+}
+body.stale .offline-banner { display: block; }
+.nobroker-banner { display: none; background: var(--warn); color: var(--warn-ink); padding: 10px 14px; border-radius: 4px; margin-bottom: 12px; }
+body.nobroker:not(.stale) .nobroker-banner { display: block; }
+body.nobroker .annunciator { opacity: .55; }
+.late { color: var(--crit); font-weight: 600; }
+td .small { white-space: nowrap; }
+body.stale .annunciator, body.stale .grid { opacity: .55; }
+
+@media (max-width: 920px) {
+  .grid, .grid.lower { grid-template-columns: minmax(0, 1fr); }
+  .conn { margin-left: 0; }
+}
+.mrow > div { min-width: 0; }
+@media (max-width: 520px) {
+  .wrap { padding: 12px; }
+  .mrow { grid-template-columns: 12px minmax(0, 1fr); }
+  .mrow > div:last-child { grid-column: 2; margin-top: 4px; }
+  .mrow .mname, .mrow .mstat { display: inline; margin-right: 8px; }
+  .annunciator { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .three { grid-template-columns: 1fr; }
+  .alarm { grid-template-columns: 20px 1fr; }
+  .alarm .when, .alarm .ack { grid-column: 2; justify-self: start; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="offline-banner" id="offline" role="alert">
+    Can't reach the monitoring server. Check that it is still running
+    (<code>python monitoring/server/server.py</code>). The page keeps trying every 2 seconds and shows the last data it got.
+  </div>
+
+  <div class="nobroker-banner" id="nobroker" role="alert">
+    The server has lost its connection to the broker, so no new results or heartbeats are arriving.
+    The statuses below are the last ones received, and they won't change until the broker is back
+    (check <code>docker ps</code>, or start it with <code>docker compose up -d</code>).
+  </div>
+
+  <header class="top">
+    <h1>Motor monitoring</h1>
+    <div class="summary" id="summary"></div>
+    <div class="conn">
+      <span id="broker"><span class="dot"></span>broker</span>
+      <span id="updated">connecting…</span>
+      <button class="iconbtn" id="theme" type="button" aria-label="Switch light or dark theme">Dark</button>
+    </div>
+  </header>
+
+  <section class="annunciator" id="ann" aria-label="Motor status windows"></section>
+
+  <section class="alarms" aria-live="polite">
+    <div class="alarms-head">
+      <h2>Alarms</h2>
+      <button class="iconbtn" id="ackall" type="button" hidden>Acknowledge all</button>
+    </div>
+    <div id="alarms"></div>
+  </section>
+
+  <div class="grid">
+    <section class="panel">
+      <h2>Motors</h2>
+      <div id="motors"></div>
+    </section>
+    <section class="panel" id="detail" aria-live="polite"></section>
+  </div>
+
+  <div class="grid lower">
+    <section class="panel">
+      <h2>Nodes</h2>
+      <div class="scroll" id="nodes"></div>
+      <p class="small muted" style="margin:10px 0 0">
+        Missing: numbers the server hasn't received yet and is asking the node to send again.
+        Lost: numbers the node no longer has, so they can't be recovered.
+      </p>
+    </section>
+    <section class="panel">
+      <h2>Events</h2>
+      <div class="events" id="events"></div>
+    </section>
+  </div>
+</div>
+<div class="tip" id="tip"></div>
+
+<script>
+"use strict";
+const POLL_MS = 2000;
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+};
+
+const FAULT = {
+  healthy: "Healthy", rotor_unbalance: "Rotor unbalance", faulty_bearing: "Faulty bearing",
+  bowed_rotor: "Bowed rotor", stator_winding: "Stator winding fault",
+  rotor_misalignment: "Rotor misalignment", broken_rotor_bars: "Broken rotor bars",
+};
+const faultName = (k) => FAULT[k] || String(k || "").replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
+
+let state = { health: null, motors: [], nodes: [], events: [], ok: false, lastOk: 0 };
+let selected = decodeURIComponent(location.hash.slice(1)) || store.get("mm.selected", null);
+let acked = new Set(store.get("mm.acked", []));
+let hist = { motor: null, runs: [], verdicts: [] };
+
+/* ---------------- time helpers ---------------- */
+const ts = (iso) => iso ? new Date(iso).getTime() : null;
+function ago(iso) {
+  const t = ts(iso); if (!t) return "never";
+  const s = Math.max(0, Math.round((Date.now() - t) / 1000));
+  if (s < 60) return `${s} s ago`;
+  if (s < 3600) return `${Math.floor(s / 60)} min ago`;
+  if (s < 86400) return `${Math.floor(s / 3600)} h ago`;
+  return `${Math.floor(s / 86400)} d ago`;
+}
+const clock = (iso) => iso ? new Date(iso).toLocaleTimeString([], {hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23"}) : "";
+const clockDay = (iso) => {
+  if (!iso) return "";
+  const d = new Date(iso), today = new Date();
+  return d.toDateString() === today.toDateString() ? clock(iso)
+    : d.toLocaleDateString([], {month: "short", day: "numeric"}) + " " + clock(iso);
+};
+
+/* ---------------- fetching ---------------- */
+async function getJSON(path) {
+  const r = await fetch(path, {cache: "no-store"});
+  if (!r.ok) throw new Error(`${path}: ${r.status}`);
+  return r.json();
+}
+async function poll() {
+  try {
+    const [health, motors, nodes, events] = await Promise.all([
+      getJSON("/health"), getJSON("/motors"), getJSON("/nodes"), getJSON("/events?limit=40")]);
+    Object.assign(state, {health, motors, nodes, events, ok: true, lastOk: Date.now()});
+    if (!selected || !motors.some((m) => m.motor_id === selected)) selected = motors[0]?.motor_id || null;
+    if (selected) {
+      const [runs, verdicts] = await Promise.all([
+        getJSON(`/motors/${encodeURIComponent(selected)}/history?type=run_result&limit=16`),
+        getJSON(`/motors/${encodeURIComponent(selected)}/history?type=verdict&limit=5`)]);
+      hist = {motor: selected, runs: runs.reverse(), verdicts};
+    }
+  } catch (e) {
+    state.ok = false;
+  }
+  render();
+  setTimeout(poll, POLL_MS);
+}
+
+/* ---------------- alarms ----------------
+   Worked out from what the server reports. Each alarm has a key; the key
+   changes when the situation changes (a new verdict, a new outage), so a
+   new problem flashes again even if an earlier one was acknowledged. */
+function alarms() {
+  const out = [];
+  for (const m of state.motors) {
+    const v = m.latest_verdict;
+    if (m.status === "FAULTY") {
+      const what = v && v.combined.verdict !== "healthy"
+        ? `${faultName(v.combined.verdict)} (${v.combined.confidence})`
+        : "runs are above the fault level; the fault type comes after the first full cycle";
+      out.push({key: `faulty:${m.motor_id}:${v ? v.combined.verdict : "stageA"}`, level: "crit", motor: m.motor_id,
+                text: `${m.motor_id} is faulty: ${what}`, at: v ? v.at : m.latest_run?.at});
+    }
+    if (m.status === "UNKNOWN") {
+      const n = state.nodes.find((x) => x.node_id === m.node_id);
+      const since = n?.state_since;
+      out.push({key: `unknown:${m.motor_id}:${since}`, level: "warn", motor: m.motor_id,
+                text: `${m.motor_id} status unknown: ${m.node_id} is ${m.node_state}${n?.reason ? ` (${n.reason})` : ""}`,
+                at: since});
+    }
+    if (v && v.agree === false && m.status !== "UNKNOWN") {
+      out.push({key: `disagree:${m.motor_id}:${v.seq}`, level: "note", motor: m.motor_id,
+                text: `${m.motor_id}: the two methods disagree (triggers say ${faultName(v.triggers.verdict).toLowerCase()}, ` +
+                      `ML says ${faultName(v.ml.verdict).toLowerCase()})`, at: v.at});
+    }
+  }
+  for (const n of state.nodes) {
+    if (n.lost_count > 0) {
+      out.push({key: `lost:${n.node_id}:${n.epoch}:${n.lost_count}`, level: "warn", motor: n.motor_id,
+                text: `${n.node_id} can't resend ${n.lost_count} result(s) (#${n.lost_seq}); they are lost for good`});
+    }
+  }
+  const dup = state.events.find((e) => e.event === "duplicate node id" && Date.now() - ts(e.at) < 120000);
+  if (dup) {
+    out.push({key: `dup:${dup.node_id}:${dup.id}`, level: "warn", motor: dup.motor_id,
+              text: `Two programs are running as ${dup.node_id}; stop one of them`, at: dup.at});
+  }
+  const rank = {crit: 0, warn: 1, note: 2};
+  return out.sort((a, b) => (acked.has(a.key) - acked.has(b.key)) || rank[a.level] - rank[b.level]);
+}
+
+function ack(keys) {
+  keys.forEach((k) => acked.add(k));
+  store.set("mm.acked", [...acked].slice(-300));
+  render();
+}
+
+/* ---------------- rendering ---------------- */
+function render() {
+  document.body.classList.toggle("stale", !state.ok && state.lastOk > 0);
+  document.body.classList.toggle("nobroker", !!state.health && state.health.broker_connected === false);
+  if (!state.ok && state.lastOk === 0) { $("updated").textContent = "waiting for the server…"; return; }
+  const al = alarms();
+  const live = new Set(al.map((a) => a.key));
+  // forget acknowledgements of alarms that have cleared, so a repeat flashes again
+  if (state.ok) for (const k of [...acked]) if (!live.has(k)) acked.delete(k);
+
+  renderHeader(al);
+  renderAnnunciator(al);
+  renderAlarms(al);
+  renderMotors();
+  renderDetail();
+  renderNodes();
+  renderEvents();
+}
+
+function renderHeader(al) {
+  const c = {HEALTHY: 0, FAULTY: 0, UNKNOWN: 0, CHECKING: 0};
+  state.motors.forEach((m) => c[m.status] = (c[m.status] || 0) + 1);
+  const n = state.motors.length;
+  const parts = [`<span><b>${n}</b> motor${n === 1 ? "" : "s"}</span>`];
+  if (c.FAULTY) parts.push(`<span><b>${c.FAULTY}</b> faulty</span>`);
+  if (c.UNKNOWN) parts.push(`<span><b>${c.UNKNOWN}</b> status unknown</span>`);
+  if (c.CHECKING) parts.push(`<span><b>${c.CHECKING}</b> checking</span>`);
+  if (c.HEALTHY) parts.push(`<span><b>${c.HEALTHY}</b> healthy</span>`);
+  $("summary").innerHTML = parts.join("");
+  const h = state.health;
+  const up = h && h.broker_connected;
+  $("broker").innerHTML = `<span class="dot ${state.ok ? (up ? "ok" : "bad") : ""}"></span>` +
+    (state.ok ? (up ? "broker connected" : "server lost the broker") : "server unreachable");
+  $("updated").textContent = state.lastOk ? `updated ${ago(new Date(state.lastOk).toISOString())}` : "";
+  document.title = (c.FAULTY ? `(${c.FAULTY} faulty) ` : "") + "Motor monitoring";
+}
+
+function renderAnnunciator(al) {
+  const el = $("ann");
+  if (!state.motors.length) {
+    el.innerHTML = `<div class="ann-empty">No motors yet. Start a node with --broker localhost and it appears here after its first message.</div>`;
+    return;
+  }
+  const flashing = new Set(al.filter((a) => !acked.has(a.key) && a.level !== "note").map((a) => a.motor));
+  el.innerHTML = state.motors.map((m) => {
+    const sub = m.status === "FAULTY" && m.latest_verdict ? faultName(m.latest_verdict.combined.verdict)
+      : m.status === "UNKNOWN" ? `${m.node_id} ${m.node_state}`
+      : m.status === "CHECKING" ? `cycle ${m.node_activity?.cycle ?? 1}, run ${m.node_activity?.runs_done ?? 0} of ${m.node_activity?.runs_per_cycle ?? 8}`
+      : m.status === "FAULTY" ? "fault type pending"
+      : m.node_id;
+    return `<button class="win ${m.motor_id === selected ? "sel" : ""} ${flashing.has(m.motor_id) ? "flash" : ""}"
+       data-status="${esc(m.status)}" data-motor="${esc(m.motor_id)}" type="button"
+       aria-label="${esc(m.motor_id)}: ${esc(m.status)}${flashing.has(m.motor_id) ? ", unacknowledged alarm" : ""}">
+       <span class="name">${esc(m.motor_id)}</span>
+       <span><span class="state">${esc(m.status)}</span><span class="sub">${esc(sub)}</span></span>
+     </button>`;
+  }).join("");
+}
+
+function renderAlarms(al) {
+  const unacked = al.filter((a) => !acked.has(a.key));
+  $("ackall").hidden = unacked.length === 0;
+  if (!al.length) {
+    $("alarms").innerHTML = `<div class="calm">No alarms. Every motor with a running node is healthy or still on its first check.</div>`;
+    return;
+  }
+  const icon = {crit: "!", warn: "?", note: "i"};
+  $("alarms").innerHTML = al.map((a) => {
+    const done = acked.has(a.key);
+    return `<div class="alarm ${a.level} ${done ? "acked" : ""}">
+      <span class="ic" aria-hidden="true">${icon[a.level]}</span>
+      <span>${esc(a.text)}</span>
+      <span class="when">${a.at ? esc(ago(a.at)) : ""}</span>
+      ${done ? `<span class="when">acknowledged</span>`
+             : `<button class="iconbtn ack" type="button" data-ack="${esc(a.key)}">Acknowledge</button>`}
+    </div>`;
+  }).join("");
+}
+
+function nodeLine(m) {
+  if (m.node_state === "online") {
+    const age = m.last_heartbeat ? Math.max(0, Math.round((Date.now() - ts(m.last_heartbeat)) / 1000)) : null;
+    const limit = state.health?.heartbeat_timeout_s || 15;
+    if (age !== null && age > limit) return `<b>${esc(m.node_id)}</b> online, <span class="late">no heartbeat for ${age} s</span>`;
+    return `<b>${esc(m.node_id)}</b> online, heartbeat ${age === null ? "not yet" : age + " s ago"}`;
+  }
+  const n = state.nodes.find((x) => x.node_id === m.node_id);
+  return `<b>${esc(m.node_id)}</b> ${esc(m.node_state)}${n?.reason ? ": " + esc(n.reason) : ""}` +
+         (n?.state_since ? `, since ${esc(clockDay(n.state_since))}` : "");
+}
+
+function cycleBar(a, runsFaulty) {
+  const total = a?.runs_per_cycle || 8, done = Math.min(a?.runs_done || 0, total);
+  let s = "";
+  for (let i = 0; i < total; i++) s += `<i class="${i < done ? "done" : ""}"></i>`;
+  return `<div class="cyclebar" role="img" aria-label="${done} of ${total} runs done in this cycle">${s}</div>`;
+}
+
+function renderMotors() {
+  if (!state.motors.length) { $("motors").innerHTML = `<p class="muted">No motors yet.</p>`; return; }
+  $("motors").innerHTML = state.motors.map((m) => {
+    const a = m.node_activity, v = m.latest_verdict;
+    const doing = m.node_state === "online" && a
+      ? `${esc(a.state)}, cycle ${a.cycle}${a.unsent ? `, <b>${a.unsent} waiting to send</b>` : ""}` : "";
+    const verdict = v
+      ? `Last verdict: <b>${esc(faultName(v.combined.verdict))}</b> (${esc(v.combined.confidence)}), cycle ${v.cycle}, ${esc(ago(v.at))}`
+      : "No verdict yet: the first full cycle isn't finished";
+    return `<div class="mrow ${m.motor_id === selected ? "sel" : ""}" data-status="${esc(m.status)}" data-motor="${esc(m.motor_id)}" tabindex="0" role="button">
+      <span class="lamp" aria-hidden="true"></span>
+      <div><div class="mname">${esc(m.motor_id)}</div><div class="mstat">${esc(m.status)}</div></div>
+      <div>
+        <div class="line">${nodeLine(m)}</div>
+        ${m.node_state === "online" ? `<div class="line">${doing}</div>${cycleBar(a)}` : ""}
+        <div class="line">${verdict}</div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+/* ----- detail panel for the selected motor ----- */
+function renderDetail() {
+  const m = state.motors.find((x) => x.motor_id === selected);
+  if (!m) { $("detail").innerHTML = `<h2>Motor</h2><p class="muted">Pick a motor to see its verdicts and recent runs.</p>`; return; }
+  const v = m.latest_verdict;
+  let html = `<div class="detail-head"><h2>${esc(m.motor_id)}</h2>
+    <span class="muted">${m.load ? "loaded" : "unloaded"}, watched by ${esc(m.node_id)}</span></div>`;
+  if (m.status === "UNKNOWN")
+    html += `<div class="banner">Status unknown: ${nodeLine(m)}. The results below are the last ones received before that.</div>`;
+
+  if (v) {
+    const c = v.combined;
+    html += `<div class="verdict-big">${esc(faultName(c.verdict))} <span class="conf">${esc(c.confidence)}, cycle ${v.cycle}, ${v.faulty_runs} of ${v.runs} runs above the fault level</span></div>
+      ${v.agree ? "" : `<div class="banner">The two methods disagree. Check this motor by hand before acting on the verdict.</div>`}
+      <div class="three">
+        <div><div class="k">Triggers (rules)</div><div class="v">${esc(faultName(v.triggers.verdict))}</div><div class="small muted">${esc(v.triggers.confidence)}</div></div>
+        <div><div class="k">ML model</div><div class="v">${esc(faultName(v.ml.verdict))}</div><div class="small muted">${esc(v.ml.confidence)}</div></div>
+        <div><div class="k">Combined</div><div class="v">${esc(faultName(c.verdict))}</div><div class="small muted">${v.agree ? "both methods agree" : "methods disagree"}</div></div>
+      </div>
+      <div class="sec"><h3>Points per fault, latest verdict</h3>${pointsChart(v)}</div>`;
+  } else {
+    html += `<p class="muted">No verdict yet. The node gives one after a full cycle of ${m.node_activity?.runs_per_cycle || 8} runs.</p>`;
+  }
+  html += `<div class="sec"><h3>Vibration and sound vs the healthy level, last ${hist.runs.length} runs</h3>${ratioChart(hist.runs)}</div>`;
+  html += `<div class="sec"><h3>Recent runs</h3>${runsTable(hist.runs)}</div>`;
+  if (hist.verdicts.length > 1) html += `<div class="sec"><h3>Earlier verdicts</h3>${verdictTable(hist.verdicts)}</div>`;
+  $("detail").innerHTML = html;
+}
+
+function pointsChart(v) {
+  const c = v.combined.points, t = v.triggers.points || {}, ml = v.ml.points || {};
+  const rows = Object.keys(c).map((k) => ({k, p: c[k], t: t[k] || 0, ml: ml[k] || 0})).sort((a, b) => b.p - a.p);
+  if (!rows.length || rows.every((r) => r.p === 0))
+    return `<p class="muted">No fault scored any points: every run in the cycle stayed at the healthy level.</p>`;
+  const W = 520, rowH = 26, labelW = 150, valW = 44, H = rows.length * rowH + 4;
+  const max = Math.max(1, ...rows.map((r) => r.p));
+  const x = (p) => (p / max) * (W - labelW - valW);
+  const bars = rows.map((r, i) => {
+    const y = i * rowH + 4, w = Math.max(r.p > 0 ? 3 : 0, x(r.p));
+    const tip = `${faultName(r.k)}: ${r.p.toFixed(1)} points (triggers ${r.t.toFixed(1)} + ML ${r.ml.toFixed(1)})`;
+    return `<g class="hit" data-tip="${esc(tip)}">
+      <rect x="0" y="${y - 2}" width="${W}" height="${rowH}" fill="transparent"/>
+      <text x="0" y="${y + 13}" ${i === 0 && r.p > 0 ? 'class="val"' : ""}>${esc(faultName(r.k))}</text>
+      ${w ? `<rect x="${labelW}" y="${y + 3}" width="${w}" height="14" rx="3" fill="var(--bar)"/>` : `<line x1="${labelW}" x2="${labelW}" y1="${y + 3}" y2="${y + 17}" stroke="var(--rule)" stroke-width="2"/>`}
+      <text x="${labelW + w + 6}" y="${y + 14}" class="val">${r.p.toFixed(1)}</text>
+    </g>`;
+  }).join("");
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Combined points per fault">${bars}</svg>`;
+}
+
+function ratioChart(runs) {
+  if (!runs.length) return `<p class="muted">No runs yet.</p>`;
+  const W = 560, H = 190, L = 44, R = 64, T = 10, B = 26;
+  const vals = runs.flatMap((r) => [r.payload.accel1_x_healthy, r.payload.mic_x_healthy]).filter((x) => x > 0);
+  const lo = Math.min(0.5, ...vals), hi = Math.max(4, ...vals);
+  const ly0 = Math.log10(lo), ly1 = Math.log10(hi);
+  const y = (v) => T + (1 - (Math.log10(Math.max(v, lo)) - ly0) / (ly1 - ly0)) * (H - T - B);
+  const n = runs.length, step = n > 1 ? (W - L - R) / (n - 1) : 0;
+  const x = (i) => n > 1 ? L + i * step : L + (W - L - R) / 2;
+  // gridlines at 1-2-5 steps
+  const ticks = [];
+  for (let e = Math.floor(ly0); e <= Math.ceil(ly1); e++) for (const m of [1, 2, 5]) {
+    const t = m * 10 ** e; if (t >= lo * 0.999 && t <= hi * 1.001) ticks.push(t);
+  }
+  const grid = ticks.map((t) => `<line x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}" stroke="var(--rule)" stroke-width="1"/>
+     <text x="${L - 6}" y="${y(t) + 4}" text-anchor="end">${t >= 1 ? t : t.toFixed(1)}×</text>`).join("");
+  const thr = `<line x1="${L}" x2="${W - R}" y1="${y(2)}" y2="${y(2)}" stroke="var(--crit)" stroke-width="1.5" stroke-dasharray="5 4"/>
+     <text x="${W - R + 6}" y="${y(2) + 4}">fault level</text>`;
+  const series = [["accel1_x_healthy", "var(--series-1)", "accel1", "c"], ["mic_x_healthy", "var(--series-2)", "mic", "s"]];
+  const lines = series.map(([key, col, name, shape]) => {
+    const pts = runs.map((r, i) => [x(i), y(r.payload[key] || lo)]);
+    const path = pts.map((p, i) => (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" ");
+    const marks = pts.map(([px, py]) => shape === "c"
+      ? `<circle cx="${px}" cy="${py}" r="4" fill="${col}" stroke="var(--surface)" stroke-width="2"/>`
+      : `<rect x="${px - 4}" y="${py - 4}" width="8" height="8" rx="1" fill="${col}" stroke="var(--surface)" stroke-width="2"/>`).join("");
+    const last = pts[pts.length - 1];
+    return `<path d="${path}" fill="none" stroke="${col}" stroke-width="2"/>${marks}`;
+  }).join("");
+  // direct labels at the right end, nudged apart when they collide
+  const la = y(runs[n - 1].payload.accel1_x_healthy || lo), lm = y(runs[n - 1].payload.mic_x_healthy || lo);
+  let ya = la, ym = lm;
+  if (Math.abs(ya - ym) < 14) { const mid = (ya + ym) / 2; ya = mid + (la <= lm ? -7 : 7); ym = mid + (la <= lm ? 7 : -7); }
+  const labels = `<text x="${x(n - 1) + 9}" y="${ya + 4}" class="val">accel1</text><text x="${x(n - 1) + 9}" y="${ym + 4}" class="val">mic</text>`;
+  // hover columns
+  const hits = runs.map((r, i) => {
+    const p = r.payload;
+    const tip = `${p.run} (${p.speed}), cycle ${p.cycle}<br>accel1 ${(+p.accel1_x_healthy).toFixed(1)}×, mic ${(+p.mic_x_healthy).toFixed(1)}×<br>${p.faulty ? "above the fault level" : "at the healthy level"}`;
+    const w = n > 1 ? step : W - L - R;
+    return `<rect class="hit col" x="${x(i) - w / 2}" y="${T}" width="${w}" height="${H - T - B}" fill="transparent" data-tip="${esc(tip)}" data-x="${x(i)}"/>`;
+  }).join("");
+  const xl = `<text x="${L}" y="${H - 6}">older</text><text x="${W - R}" y="${H - 6}" text-anchor="end">newest</text>`;
+  return `<div class="legend"><span><svg width="12" height="12"><circle cx="6" cy="6" r="5" fill="var(--series-1)"/></svg>accel1 vibration</span>
+      <span><svg width="12" height="12"><rect x="1" y="1" width="10" height="10" rx="1" fill="var(--series-2)"/></svg>mic sound</span>
+      <span class="muted">times the healthy level, log scale; a run is faulty at 2× or more</span></div>
+    <svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Vibration and sound of recent runs compared with the healthy level">
+      ${grid}${thr}<line id="xhair" x1="0" x2="0" y1="${T}" y2="${H - B}" stroke="var(--ink-3)" stroke-width="1" visibility="hidden"/>
+      ${lines}${labels}${xl}${hits}</svg>`;
+}
+
+function runsTable(runs) {
+  if (!runs.length) return `<p class="muted">No runs yet.</p>`;
+  const rows = runs.slice(-8).reverse().map((r) => {
+    const p = r.payload;
+    return `<tr><td>${esc(clockDay(r.created_at))}</td><td>${p.cycle}</td><td>${esc(p.run)}</td><td>${esc(p.speed)}</td>
+      <td class="n">${(+p.accel1_x_healthy).toFixed(1)}×</td><td class="n">${(+p.mic_x_healthy).toFixed(1)}×</td>
+      <td>${p.faulty ? "<b>above</b>" : "healthy"}</td></tr>`;
+  }).join("");
+  return `<div class="scroll"><table><thead><tr><th>Time</th><th>Cycle</th><th>Recording</th><th>Speed</th>
+    <th class="n">accel1</th><th class="n">mic</th><th>Fault level</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+
+function verdictTable(vs) {
+  const rows = vs.map((r) => {
+    const p = r.payload;
+    return `<tr><td>${esc(clockDay(r.created_at))}</td><td>${p.cycle}</td><td><b>${esc(faultName(p.combined.verdict))}</b> (${esc(p.combined.confidence)})</td>
+      <td>${esc(faultName(p.triggers.verdict))}</td><td>${esc(faultName(p.ml.verdict))}</td><td>${p.agree ? "yes" : "<b>no</b>"}</td></tr>`;
+  }).join("");
+  return `<div class="scroll"><table><thead><tr><th>Time</th><th>Cycle</th><th>Combined</th><th>Triggers</th><th>ML</th><th>Agree</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+
+function renderNodes() {
+  if (!state.nodes.length) { $("nodes").innerHTML = `<p class="muted">No nodes have connected yet.</p>`; return; }
+  const rows = state.nodes.map((n) => {
+    const unsent = n.activity?.unsent ?? 0;
+    return `<tr><td><b>${esc(n.node_id)}</b></td><td style="white-space:nowrap">${esc(n.motor_id)}</td>
+      <td><span class="tag ${esc(n.state)}">${esc(n.state)}</span>${n.state !== "online" && n.reason ? `<div class="small muted">${esc(n.reason)}</div>` : ""}</td>
+      <td>${esc(ago(n.last_heartbeat))}</td>
+      <td class="n">${n.received}</td>
+      <td class="n">${n.highest_seq ?? ""}</td>
+      <td class="n">${unsent || ""}</td>
+      <td class="n">${n.missing_count ? `${n.missing_count}<div class="small muted">#${esc(n.missing_seq)}</div>` : ""}</td>
+      <td class="n">${n.lost_count ? `<span class="bad-n">${n.lost_count}</span><div class="small muted">#${esc(n.lost_seq)}</div>` : ""}</td>
+      <td class="n">${n.duplicates_ignored || ""}</td></tr>`;
+  }).join("");
+  $("nodes").innerHTML = `<table><thead><tr><th>Node</th><th>Motor</th><th>State</th><th>Last heartbeat</th>
+    <th class="n">Received</th><th class="n">Highest #</th><th class="n">Unsent</th><th class="n">Missing</th><th class="n">Lost</th><th class="n">Repeats</th></tr></thead>
+    <tbody>${rows}</tbody></table>`;
+}
+
+const EV_LABEL = {
+  online: "Online", offline: "Offline", stopped: "Stopped", "went silent": "Went silent",
+  "numbering restarted": "Numbering restarted", "duplicate node id": "Duplicate node id", "lost for good": "Lost for good",
+};
+function renderEvents() {
+  if (!state.events.length) { $("events").innerHTML = `<p class="muted">Nothing has happened yet. Node connections, outages and recoveries show up here.</p>`; return; }
+  $("events").innerHTML = `<table><tbody>${state.events.map((e) => `<tr>
+    <td class="small muted" style="white-space:nowrap">${esc(clockDay(e.at))}</td>
+    <td class="ev-kind">${esc(EV_LABEL[e.event] || String(e.event).replace(/^./, (c) => c.toUpperCase()))}</td>
+    <td><b>${esc(e.node_id)}</b> ${e.motor_id ? `(${esc(e.motor_id)})` : ""}<div class="small muted">${esc(e.detail)}</div></td></tr>`).join("")}</tbody></table>`;
+}
+
+/* ---------------- interaction ---------------- */
+function select(id) {
+  if (!id || id === selected) return;
+  selected = id;
+  store.set("mm.selected", id);
+  window.history.replaceState(null, "", "#" + encodeURIComponent(id));
+  hist = {motor: id, runs: [], verdicts: []};
+  render();
+  Promise.all([
+    getJSON(`/motors/${encodeURIComponent(id)}/history?type=run_result&limit=16`),
+    getJSON(`/motors/${encodeURIComponent(id)}/history?type=verdict&limit=5`),
+  ]).then(([runs, verdicts]) => { if (selected === id) { hist = {motor: id, runs: runs.reverse(), verdicts}; render(); } }).catch(() => {});
+}
+document.addEventListener("click", (e) => {
+  const a = e.target.closest("[data-ack]");
+  if (a) { ack([a.dataset.ack]); return; }
+  const m = e.target.closest("[data-motor]");
+  if (m) select(m.dataset.motor);
+});
+document.addEventListener("keydown", (e) => {
+  const m = e.target.closest?.(".mrow");
+  if (m && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); select(m.dataset.motor); }
+});
+$("ackall").addEventListener("click", () => ack(alarms().map((a) => a.key)));
+
+const tip = $("tip");
+document.addEventListener("pointermove", (e) => {
+  const h = e.target.closest?.(".hit");
+  const xh = document.getElementById("xhair");
+  if (!h) { tip.style.display = "none"; if (xh) xh.setAttribute("visibility", "hidden"); return; }
+  tip.innerHTML = h.dataset.tip;
+  tip.style.display = "block";
+  const r = tip.getBoundingClientRect();
+  let left = e.clientX + 14, top = e.clientY + 14;
+  if (left + r.width > innerWidth - 8) left = e.clientX - r.width - 14;
+  if (top + r.height > innerHeight - 8) top = e.clientY - r.height - 14;
+  tip.style.left = left + "px"; tip.style.top = top + "px";
+  if (xh) {
+    if (h.dataset.x) { xh.setAttribute("x1", h.dataset.x); xh.setAttribute("x2", h.dataset.x); xh.setAttribute("visibility", "visible"); }
+    else xh.setAttribute("visibility", "hidden");
+  }
+});
+
+/* theme: follows the computer's setting until you pick one */
+function applyTheme(t) {
+  if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
+  const dark = t ? t === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  $("theme").textContent = dark ? "Light" : "Dark";
+}
+applyTheme(store.get("mm.theme", null));
+$("theme").addEventListener("click", () => {
+  const dark = document.documentElement.dataset.theme ? document.documentElement.dataset.theme === "dark"
+    : matchMedia("(prefers-color-scheme: dark)").matches;
+  const t = dark ? "light" : "dark";
+  store.set("mm.theme", t); applyTheme(t);
+});
+
+setInterval(() => { if (state.lastOk) { renderHeader(alarms()); } }, 1000);
+poll();
+</script>
+</body>
+</html>
