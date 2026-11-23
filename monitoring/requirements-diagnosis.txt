@@ -1,0 +1,5 @@
+# Libraries the diagnosis code (predict_motor.py, ml/predict_ml.py, ...) needs.
+numpy>=1.24
+scipy>=1.10
+pandas>=2.0
+PyWavelets>=1.4

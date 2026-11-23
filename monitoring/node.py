@@ -365,9 +365,10 @@ def main():
     node = Node(a.node_id, a.motor_id, a.data, a.load, store, a.realtime, a.speed, a.broker,
                 a.heartbeat, a.fail_after, a.fail_mode, a.flush_wait)
 
-    def on_stop(*_):          # Ctrl+C: finish cleanly, keep what is already saved
+    def on_stop(*_):          # Ctrl+C, or "docker stop": finish cleanly, keep what is already saved
         node.stop = True
     signal.signal(signal.SIGINT, on_stop)
+    signal.signal(signal.SIGTERM, on_stop)
     node.run(a.cycles)
 
 

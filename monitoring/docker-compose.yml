@@ -1,20 +1,101 @@
-# The monitoring system's services, run with Docker.
-#   start:  docker compose -f monitoring/docker-compose.yml up -d
-#   stop:   docker compose -f monitoring/docker-compose.yml down
-#   logs:   docker compose -f monitoring/docker-compose.yml logs -f broker
+# The whole monitoring system in Docker (step 7): broker, server + dashboard,
+# and four simulated nodes. Run these from the monitoring folder:
 #
-# Step 2: only the MQTT broker (Mosquitto). Later steps add the server,
-# database and dashboard here.
+#   start everything:   docker compose up -d --build
+#   dashboard:          http://localhost:8000
+#   what is running:    docker compose ps
+#   logs:               docker compose logs -f            (all)
+#                       docker compose logs -f node-1     (one)
+#   stop everything:    docker compose down               (data is kept)
+#   stop + wipe data:   docker compose down -v            (database, node stores, broker queue)
+#
+# Only the broker:  docker compose up -d broker   (as in steps 2 to 6, when you
+# run the server and nodes by hand with python).
+#
+# To add a motor, copy one of the node blocks below, give it a new name,
+# --node-id, --motor-id and --data folder, and run "docker compose up -d" again.
+
+# settings shared by every node (the "<<: *node" lines below copy them in)
+x-node: &node
+  build:
+    context: ..
+    dockerfile: monitoring/Dockerfile
+  image: motor-monitor:latest         # same image as the server (built once, then reused)
+  depends_on:                         # start after (and stop before) the broker and server,
+    broker:                           # so the server sees every node come and go
+      condition: service_healthy
+    server:
+      condition: service_started
+  volumes:
+    - ../Loaded:/app/Loaded:ro        # the recordings, read-only
+    - ../Unloaded:/app/Unloaded:ro
+    - node-stores:/app/monitoring/stores   # each node's local store (step 5) survives restarts
+  init: true                          # a tiny helper runs first and passes stop signals on to the node
+  restart: unless-stopped             # a node that crashes is started again by Docker
+  stop_grace_period: 20s              # time to send what's unsent and say "stopped" on docker stop
+
 services:
   broker:
     image: eclipse-mosquitto:2
     container_name: monitor-broker
     ports:
-      - "1883:1883"                 # MQTT, reachable on this PC as localhost:1883
+      - "1883:1883"                   # MQTT, also reachable on this PC as localhost:1883
     volumes:
       - ./broker/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
-      - broker-data:/mosquitto/data # keeps queued messages across broker restarts
+      - broker-data:/mosquitto/data   # keeps queued messages across broker restarts
     restart: unless-stopped
+    healthcheck:                      # "healthy" once it accepts a connection
+      test: ["CMD", "mosquitto_pub", "-h", "localhost", "-t", "monitor-health", "-m", "ok"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 3s
+
+  server:
+    build:
+      context: ..                     # the repo root, so the image gets the diagnosis code too
+      dockerfile: monitoring/Dockerfile
+    image: motor-monitor:latest       # the nodes use this same image
+    container_name: monitor-server
+    command: ["python", "monitoring/server/server.py", "--broker", "broker", "--db", "/data/central.db"]
+    ports:
+      - "8000:8000"                   # dashboard and API: http://localhost:8000
+    volumes:
+      - server-data:/data             # the central database survives restarts
+    depends_on:
+      broker:
+        condition: service_healthy
+    restart: unless-stopped
+
+  node-1:
+    <<: *node
+    container_name: monitor-node-1
+    command: ["python", "monitoring/node.py", "--node-id", "node-1", "--motor-id", "pump-A",
+              "--data", "Loaded/RU", "--load", "1", "--broker", "broker",
+              "--cycles", "0", "--realtime", "--speed", "5"]
+
+  node-2:
+    <<: *node
+    container_name: monitor-node-2
+    command: ["python", "monitoring/node.py", "--node-id", "node-2", "--motor-id", "fan-B",
+              "--data", "Unloaded/HH", "--load", "0", "--broker", "broker",
+              "--cycles", "0", "--realtime", "--speed", "5"]
+
+  node-3:
+    <<: *node
+    container_name: monitor-node-3
+    command: ["python", "monitoring/node.py", "--node-id", "node-3", "--motor-id", "pump-C",
+              "--data", "Loaded/FB", "--load", "1", "--broker", "broker",
+              "--cycles", "0", "--realtime", "--speed", "5"]
+
+  node-4:
+    <<: *node
+    container_name: monitor-node-4
+    command: ["python", "monitoring/node.py", "--node-id", "node-4", "--motor-id", "fan-D",
+              "--data", "Unloaded/BR", "--load", "0", "--broker", "broker",
+              "--cycles", "0", "--realtime", "--speed", "5"]
 
 volumes:
   broker-data:
+  server-data:
+  node-stores:

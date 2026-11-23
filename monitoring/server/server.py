@@ -185,7 +185,8 @@ def make_app(store, receiver):
     @app.get("/health")
     def health():
         return {"server": "up", "broker_connected": receiver.connected.is_set(), "heartbeat_timeout_s": receiver.timeout,
-                "broker": f"{receiver.host}:{receiver.port}", "messages": receiver.stats, "time": now_utc()}
+                "broker": f"{receiver.host}:{receiver.port}", "messages": receiver.stats, "time": now_utc(),
+                "time_ms": int(time.time() * 1000)}   # the dashboard uses this to correct for clock differences
 
     @app.get("/motors")
     def motors():

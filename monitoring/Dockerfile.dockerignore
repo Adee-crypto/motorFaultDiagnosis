@@ -1,0 +1,17 @@
+# What goes into the image (step 7). Docker reads this file because it sits
+# next to the Dockerfile. Everything is left out except the code it needs.
+*
+!*.py
+!trigger_calibration_final_load*.json
+!ml/*.py
+!ml/ml_triggers_load*.json
+!monitoring/
+
+# but not local data, test stores, diagrams or caches
+monitoring/stores
+monitoring/docs
+monitoring/server/*.db*
+**/*.db
+**/*.db-*
+**/*.lock
+**/__pycache__

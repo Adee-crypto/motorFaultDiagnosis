@@ -348,9 +348,13 @@ let hist = { motor: null, runs: [], verdicts: [] };
 
 /* ---------------- time helpers ---------------- */
 const ts = (iso) => iso ? new Date(iso).getTime() : null;
+/* Times come from the server's clock. When the server runs in Docker its clock can be
+   some seconds off from this computer's, so ages are measured on the server's clock. */
+let clockOffset = 0;
+const serverNow = () => Date.now() + clockOffset;
 function ago(iso) {
   const t = ts(iso); if (!t) return "never";
-  const s = Math.max(0, Math.round((Date.now() - t) / 1000));
+  const s = Math.max(0, Math.round((serverNow() - t) / 1000));
   if (s < 60) return `${s} s ago`;
   if (s < 3600) return `${Math.floor(s / 60)} min ago`;
   if (s < 86400) return `${Math.floor(s / 3600)} h ago`;
@@ -372,8 +376,10 @@ async function getJSON(path) {
 }
 async function poll() {
   try {
+    const t0 = Date.now();
     const [health, motors, nodes, events] = await Promise.all([
       getJSON("/health"), getJSON("/motors"), getJSON("/nodes"), getJSON("/events?limit=40")]);
+    if (health.time_ms) clockOffset = health.time_ms - (t0 + Date.now()) / 2;
     Object.assign(state, {health, motors, nodes, events, ok: true, lastOk: Date.now()});
     if (!selected || !motors.some((m) => m.motor_id === selected)) selected = motors[0]?.motor_id || null;
     if (selected) {
@@ -423,7 +429,7 @@ function alarms() {
                 text: `${n.node_id} can't resend ${n.lost_count} result(s) (#${n.lost_seq}); they are lost for good`});
     }
   }
-  const dup = state.events.find((e) => e.event === "duplicate node id" && Date.now() - ts(e.at) < 120000);
+  const dup = state.events.find((e) => e.event === "duplicate node id" && serverNow() - ts(e.at) < 120000);
   if (dup) {
     out.push({key: `dup:${dup.node_id}:${dup.id}`, level: "warn", motor: dup.motor_id,
               text: `Two programs are running as ${dup.node_id}; stop one of them`, at: dup.at});
@@ -471,7 +477,7 @@ function renderHeader(al) {
   const up = h && h.broker_connected;
   $("broker").innerHTML = `<span class="dot ${state.ok ? (up ? "ok" : "bad") : ""}"></span>` +
     (state.ok ? (up ? "broker connected" : "server lost the broker") : "server unreachable");
-  $("updated").textContent = state.lastOk ? `updated ${ago(new Date(state.lastOk).toISOString())}` : "";
+  $("updated").textContent = state.lastOk ? `updated ${Math.round((Date.now() - state.lastOk) / 1000)} s ago` : "";
   document.title = (c.FAULTY ? `(${c.FAULTY} faulty) ` : "") + "Motor monitoring";
 }
 
@@ -519,7 +525,7 @@ function renderAlarms(al) {
 
 function nodeLine(m) {
   if (m.node_state === "online") {
-    const age = m.last_heartbeat ? Math.max(0, Math.round((Date.now() - ts(m.last_heartbeat)) / 1000)) : null;
+    const age = m.last_heartbeat ? Math.max(0, Math.round((serverNow() - ts(m.last_heartbeat)) / 1000)) : null;
     const limit = state.health?.heartbeat_timeout_s || 15;
     if (age !== null && age > limit) return `<b>${esc(m.node_id)}</b> online, <span class="late">no heartbeat for ${age} s</span>`;
     return `<b>${esc(m.node_id)}</b> online, heartbeat ${age === null ? "not yet" : age + " s ago"}`;

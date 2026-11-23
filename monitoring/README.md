@@ -243,5 +243,62 @@ If the server stops, a banner says so and the page keeps the last data. If the
 server loses the broker, a banner says the statuses are frozen. A Light/Dark
 button switches the theme.
 
+## Step 7: one-command startup with Docker (done)
+
+Everything (broker, server + dashboard, and four simulated nodes) starts with
+one command. Run it from the `monitoring` folder:
+
+```
+docker compose up -d --build
+```
+
+Then open http://localhost:8000. The first time takes a few minutes, because
+Docker downloads Python and the libraries and builds the image.
+
+| Command (in `monitoring`) | What it does |
+|---|---|
+| `docker compose up -d --build` | start everything (rebuilds the image if the code changed) |
+| `docker compose ps` | what is running |
+| `docker compose logs -f` / `docker compose logs -f node-1` | follow the output of all / one |
+| `docker compose stop node-2` / `docker compose start node-2` | stop / start one part |
+| `docker compose restart server` | restart the server (its database is kept) |
+| `docker compose down` | stop and remove everything; the data is kept |
+| `docker compose down -v` | also wipe the data (database, node stores, broker queue) |
+| `docker compose up -d broker` | only the broker, as in steps 2 to 6 |
+
+How it is put together:
+
+- `Dockerfile`: one image (`motor-monitor`) for the server and the nodes:
+  Python, the libraries (`requirements.txt`, `requirements-diagnosis.txt`), the
+  diagnosis code and `monitoring/`. `Dockerfile.dockerignore` keeps everything
+  else out. The recordings are not in the image: the nodes see `Loaded/` and
+  `Unloaded/` read-only through a mount.
+- `docker-compose.yml`: the broker starts first; the server and nodes wait until
+  it is healthy (accepts connections), and the nodes also start after the
+  server (and stop before it). Inside Docker they reach the broker by its
+  service name, `broker`.
+- Data lives in Docker volumes, so it survives restarts and `docker compose down`:
+  `server-data` (central database), `node-stores` (each node's store from
+  step 5), `broker-data` (the broker's queue).
+- `restart: unless-stopped`: if a program crashes, Docker starts it again. A
+  node that comes back carries on numbering from its store and sends what it
+  had kept. (A container you stop yourself stays stopped.)
+- `docker stop` / `docker compose down` let each node finish cleanly: it sends
+  what it can and says "stopped", so the dashboard doesn't report a lost connection.
+
+To add a motor, copy a node block in `docker-compose.yml`, give it a new
+service name, `--node-id`, `--motor-id` and `--data` folder, then run
+`docker compose up -d`.
+
+Test failures inside a container with `tests/crash_node.py`:
+
+```
+docker compose exec node-3 python monitoring/tests/crash_node.py            # crash: Docker restarts it
+docker compose exec node-3 python monitoring/tests/crash_node.py --hang 30  # freeze for 30 s
+```
+
+The dashboard measures heartbeat ages on the server's clock, so a Docker
+clock that is a few seconds off from Windows doesn't make nodes look late.
+
 ## Coming next
-7. One-command startup  8. Security  9. Cloud
+8. Security  9. Cloud
