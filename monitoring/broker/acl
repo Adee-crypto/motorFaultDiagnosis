@@ -1,0 +1,20 @@
+# Topic rules for the broker (step 8). Anything not allowed here is refused:
+# a client may only read or write the topics listed for it.
+# (%u means "this client's own user name". A node's user name is its node id.)
+
+# The server reads everything the nodes send and writes resend requests.
+user server
+topic read monitor/#
+topic write control/#
+
+# Tools on your PC (listener.py) may only read.
+user tools
+topic read monitor/#
+
+# The broker's health check only needs to log in; it may read and write nothing.
+user healthcheck
+
+# Every node may only write its own topics and read its own resend requests,
+# so one node can't pretend to be another or read another's control messages.
+pattern write monitor/%u/#
+pattern read control/%u/#

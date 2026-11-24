@@ -77,7 +77,7 @@ import predict_motor as PM                    # noqa: E402  hand-found triggers
 import predict_ml as PML                      # noqa: E402  ML-found triggers
 from process_fault import FALLBACK_FS, CHANNEL_MAP, SPEED_LABELS  # noqa: E402
 from local_store import LocalStore, StoreInUse  # noqa: E402
-from messaging import Publisher               # noqa: E402
+from messaging import Publisher, add_security_args, security_from_args   # noqa: E402
 
 warnings.filterwarnings("ignore")
 
@@ -121,7 +121,7 @@ class SensorReplay:
 
 class Node:
     def __init__(self, node_id, motor_id, data_dir, load, store_path, realtime=False, speed=1.0, broker=None,
-                 heartbeat=5.0, fail_after=None, fail_mode=None, flush_wait=10.0):
+                 heartbeat=5.0, fail_after=None, fail_mode=None, flush_wait=10.0, security=None):
         self.node_id, self.motor_id, self.load = node_id, motor_id, load
         self.realtime, self.speed = realtime, speed
         self.files = self._find_runs(data_dir, load)
@@ -142,7 +142,8 @@ class Node:
         self.heartbeat_s, self.fail_after, self.fail_mode = heartbeat, fail_after, fail_mode
         self.frozen = False
         self._hb_stop = threading.Event()
-        self.publisher = Publisher(broker, client_id=node_id, log=self.log, motor_id=motor_id) if broker else None
+        self.publisher = (Publisher(broker, client_id=node_id, log=self.log, motor_id=motor_id, security=security)
+                          if broker else None)
 
     @staticmethod
     def _find_runs(data_dir, load):
@@ -352,18 +353,20 @@ def main():
     ap.add_argument("--cycles", type=int, default=1, help="full cycles to run; 0 = forever")
     ap.add_argument("--realtime", action="store_true")
     ap.add_argument("--speed", type=float, default=1.0)
-    ap.add_argument("--broker", help="MQTT broker, host or host:port (e.g. localhost)")
+    ap.add_argument("--broker", help="MQTT broker, host or host:port (e.g. localhost; port 8883 with TLS)")
     ap.add_argument("--heartbeat", type=float, default=5.0, help="seconds between heartbeats (default 5)")
     ap.add_argument("--flush-wait", type=float, default=10.0,
                     help="at the end, seconds to keep trying to send unsent results (default 10)")
     ap.add_argument("--fail-after", type=float, help="TEST: seconds until a simulated failure")
     ap.add_argument("--fail-mode", choices=["crash", "hang"], help="TEST: crash = die at once; hang = freeze")
+    add_security_args(ap)     # --ca, --user (default: the node id), --password-file, --no-tls
     a = ap.parse_args()
+    security = security_from_args(a, default_user=a.node_id) if a.broker else None
     store = a.store or os.path.join(HERE, "stores", f"{a.node_id}.db")
     if (a.fail_after is None) != (a.fail_mode is None):
         ap.error("--fail-after and --fail-mode go together")
     node = Node(a.node_id, a.motor_id, a.data, a.load, store, a.realtime, a.speed, a.broker,
-                a.heartbeat, a.fail_after, a.fail_mode, a.flush_wait)
+                a.heartbeat, a.fail_after, a.fail_mode, a.flush_wait, security)
 
     def on_stop(*_):          # Ctrl+C, or "docker stop": finish cleanly, keep what is already saved
         node.stop = True

@@ -103,6 +103,8 @@ button { font: inherit; color: inherit; }
 }
 .summary { color: var(--ink-2); display: flex; gap: 18px; flex-wrap: wrap; }
 .summary b { color: var(--ink); font-weight: 600; }
+#signout { display: inline-flex; align-items: center; gap: 8px; margin: 0; }
+#signout[hidden] { display: none; }
 .conn { margin-left: auto; display: flex; gap: 16px; align-items: center; color: var(--ink-2); font-size: 14px; }
 .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--ink-3); margin-right: 6px; vertical-align: 1px; }
 .dot.ok { background: var(--good); }
@@ -286,6 +288,9 @@ body.stale .annunciator, body.stale .grid { opacity: .55; }
       <span id="broker"><span class="dot"></span>broker</span>
       <span id="updated">connecting…</span>
       <button class="iconbtn" id="theme" type="button" aria-label="Switch light or dark theme">Dark</button>
+      <form method="post" action="/logout" id="signout" hidden>
+        <span id="who"></span> <button class="iconbtn" type="submit">Sign out</button>
+      </form>
     </div>
   </header>
 
@@ -370,7 +375,11 @@ const clockDay = (iso) => {
 
 /* ---------------- fetching ---------------- */
 async function getJSON(path) {
-  const r = await fetch(path, {cache: "no-store"});
+  const r = await fetch(path, {cache: "no-store", credentials: "same-origin"});
+  if (r.status === 401) {               // signed out (session ended): back to the sign-in page
+    location.href = "/login?next=" + encodeURIComponent(location.pathname + location.hash);
+    throw new Error("signed out");
+  }
   if (!r.ok) throw new Error(`${path}: ${r.status}`);
   return r.json();
 }
@@ -772,6 +781,9 @@ $("theme").addEventListener("click", () => {
 });
 
 setInterval(() => { if (state.lastOk) { renderHeader(alarms()); } }, 1000);
+getJSON("/me").then((me) => {
+  if (me.user) { $("who").textContent = me.user; $("signout").hidden = false; }
+}).catch(() => {});
 poll();
 </script>
 </body>

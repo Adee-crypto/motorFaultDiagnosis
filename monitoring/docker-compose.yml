@@ -1,19 +1,28 @@
-# The whole monitoring system in Docker (step 7): broker, server + dashboard,
-# and four simulated nodes. Run these from the monitoring folder:
+# The whole monitoring system in Docker: broker, server + dashboard, and four
+# simulated nodes (step 7), secured with TLS and logins (step 8).
 #
+# Once, before the first start (from the repo root; needs: pip install cryptography):
+#   python monitoring/security/setup_security.py
+#
+# Then, from the monitoring folder:
 #   start everything:   docker compose up -d --build
-#   dashboard:          http://localhost:8000
+#   dashboard:          https://localhost:8000      (sign in: see secrets/dashboard_admin_password.txt)
 #   what is running:    docker compose ps
 #   logs:               docker compose logs -f            (all)
 #                       docker compose logs -f node-1     (one)
 #   stop everything:    docker compose down               (data is kept)
 #   stop + wipe data:   docker compose down -v            (database, node stores, broker queue)
 #
-# Only the broker:  docker compose up -d broker   (as in steps 2 to 6, when you
-# run the server and nodes by hand with python).
+# Only the broker:  docker compose up -d broker   (when you run the server and
+# nodes by hand with python; they find the secrets in monitoring/secrets).
 #
-# To add a motor, copy one of the node blocks below, give it a new name,
-# --node-id, --motor-id and --data folder, and run "docker compose up -d" again.
+# To add a motor: make its login (setup_security.py add-node node-5), add a
+# node-5_mqtt secret at the bottom, copy a node block and change the names,
+# then:  docker compose restart broker  and  docker compose up -d
+#
+# Secrets (step 8): each container gets only the secret files it needs, at
+# /run/secrets/<name>, read-only. They come from monitoring/secrets/, which is
+# never pushed to git and never copied into the image.
 
 # settings shared by every node (the "<<: *node" lines below copy them in)
 x-node: &node
@@ -39,17 +48,41 @@ services:
     image: eclipse-mosquitto:2
     container_name: monitor-broker
     ports:
-      - "1883:1883"                   # MQTT, also reachable on this PC as localhost:1883
+      - "8883:8883"                   # MQTT over TLS; also reachable on this PC as localhost:8883
     volumes:
-      - ./broker/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - ./broker:/broker:ro           # mosquitto.conf and acl (the topic rules: who may read/write what)
       - broker-data:/mosquitto/data   # keeps queued messages across broker restarts
+    secrets:
+      - {source: ca_cert, target: ca.crt}
+      - {source: broker_cert, target: broker.crt}
+      - {source: broker_key, target: broker.key}
+      - {source: mqtt_passwords, target: mqtt_passwords.txt}
+      - {source: healthcheck_mqtt, target: healthcheck_password}
+    # Before Mosquitto starts: copy the certificates and topic rules to a private
+    # folder, and turn the password list into hashes (Mosquitto's own tool), so
+    # the broker never keeps readable passwords.
+    command:
+      - sh
+      - -c
+      - |
+        set -e
+        rm -rf /mosquitto/secure
+        mkdir -m 700 /mosquitto/secure
+        cp /run/secrets/ca.crt /run/secrets/broker.crt /run/secrets/broker.key /broker/acl /mosquitto/secure/
+        cp /run/secrets/mqtt_passwords.txt /mosquitto/secure/passwd
+        chmod 600 /mosquitto/secure/*
+        mosquitto_passwd -U /mosquitto/secure/passwd
+        chown -R mosquitto:mosquitto /mosquitto/secure
+        echo "broker: certificates, logins and topic rules loaded"
+        exec /usr/sbin/mosquitto -c /broker/mosquitto.conf
     restart: unless-stopped
-    healthcheck:                      # "healthy" once it accepts a connection
-      test: ["CMD", "mosquitto_pub", "-h", "localhost", "-t", "monitor-health", "-m", "ok"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-      start_period: 3s
+    healthcheck:                      # "healthy" once a TLS login works
+      test: ["CMD-SHELL", "mosquitto_pub -h localhost -p 8883 --cafile /run/secrets/ca.crt -u healthcheck -P \"$$(cat /run/secrets/healthcheck_password)\" -t health -m ok"]
+      start_period: 30s               # while starting: check every 2 s
+      start_interval: 2s
+      interval: 30s                   # then every 30 s (each check is a login in the broker's log)
+      timeout: 5s
+      retries: 3
 
   server:
     build:
@@ -57,11 +90,20 @@ services:
       dockerfile: monitoring/Dockerfile
     image: motor-monitor:latest       # the nodes use this same image
     container_name: monitor-server
-    command: ["python", "monitoring/server/server.py", "--broker", "broker", "--db", "/data/central.db"]
+    command: ["python", "monitoring/server/server.py", "--broker", "broker", "--db", "/data/central.db",
+              "--ca", "/run/secrets/ca.crt", "--password-file", "/run/secrets/mqtt_password",
+              "--web-cert", "/run/secrets/web.crt", "--web-key", "/run/secrets/web.key",
+              "--users", "/run/secrets/dashboard_users.txt"]
     ports:
-      - "8000:8000"                   # dashboard and API: http://localhost:8000
+      - "8000:8000"                   # dashboard and API: https://localhost:8000
     volumes:
       - server-data:/data             # the central database survives restarts
+    secrets:
+      - {source: ca_cert, target: ca.crt}
+      - {source: server_mqtt, target: mqtt_password}
+      - {source: web_cert, target: web.crt}
+      - {source: web_key, target: web.key}
+      - {source: dashboard_users, target: dashboard_users.txt}
     depends_on:
       broker:
         condition: service_healthy
@@ -72,28 +114,61 @@ services:
     container_name: monitor-node-1
     command: ["python", "monitoring/node.py", "--node-id", "node-1", "--motor-id", "pump-A",
               "--data", "Loaded/RU", "--load", "1", "--broker", "broker",
-              "--cycles", "0", "--realtime", "--speed", "5"]
+              "--cycles", "0", "--realtime", "--speed", "5",
+              "--ca", "/run/secrets/ca.crt", "--password-file", "/run/secrets/mqtt_password"]
+    secrets:
+      - {source: ca_cert, target: ca.crt}
+      - {source: node-1_mqtt, target: mqtt_password}
 
   node-2:
     <<: *node
     container_name: monitor-node-2
     command: ["python", "monitoring/node.py", "--node-id", "node-2", "--motor-id", "fan-B",
               "--data", "Unloaded/HH", "--load", "0", "--broker", "broker",
-              "--cycles", "0", "--realtime", "--speed", "5"]
+              "--cycles", "0", "--realtime", "--speed", "5",
+              "--ca", "/run/secrets/ca.crt", "--password-file", "/run/secrets/mqtt_password"]
+    secrets:
+      - {source: ca_cert, target: ca.crt}
+      - {source: node-2_mqtt, target: mqtt_password}
 
   node-3:
     <<: *node
     container_name: monitor-node-3
     command: ["python", "monitoring/node.py", "--node-id", "node-3", "--motor-id", "pump-C",
               "--data", "Loaded/FB", "--load", "1", "--broker", "broker",
-              "--cycles", "0", "--realtime", "--speed", "5"]
+              "--cycles", "0", "--realtime", "--speed", "5",
+              "--ca", "/run/secrets/ca.crt", "--password-file", "/run/secrets/mqtt_password"]
+    secrets:
+      - {source: ca_cert, target: ca.crt}
+      - {source: node-3_mqtt, target: mqtt_password}
 
   node-4:
     <<: *node
     container_name: monitor-node-4
     command: ["python", "monitoring/node.py", "--node-id", "node-4", "--motor-id", "fan-D",
               "--data", "Unloaded/BR", "--load", "0", "--broker", "broker",
-              "--cycles", "0", "--realtime", "--speed", "5"]
+              "--cycles", "0", "--realtime", "--speed", "5",
+              "--ca", "/run/secrets/ca.crt", "--password-file", "/run/secrets/mqtt_password"]
+    secrets:
+      - {source: ca_cert, target: ca.crt}
+      - {source: node-4_mqtt, target: mqtt_password}
+
+# The secret files (made by security/setup_security.py). If one is missing,
+# "docker compose up" stops with an error naming it: run the setup first.
+secrets:
+  ca_cert:          {file: ./secrets/ca.crt}
+  broker_cert:      {file: ./secrets/broker.crt}
+  broker_key:       {file: ./secrets/broker.key}
+  web_cert:         {file: ./secrets/web.crt}
+  web_key:          {file: ./secrets/web.key}
+  mqtt_passwords:   {file: ./secrets/mqtt_passwords.txt}
+  dashboard_users:  {file: ./secrets/dashboard_users.txt}
+  healthcheck_mqtt: {file: ./secrets/mqtt/healthcheck.txt}
+  server_mqtt:      {file: ./secrets/mqtt/server.txt}
+  node-1_mqtt:      {file: ./secrets/mqtt/node-1.txt}
+  node-2_mqtt:      {file: ./secrets/mqtt/node-2.txt}
+  node-3_mqtt:      {file: ./secrets/mqtt/node-3.txt}
+  node-4_mqtt:      {file: ./secrets/mqtt/node-4.txt}
 
 volumes:
   broker-data:

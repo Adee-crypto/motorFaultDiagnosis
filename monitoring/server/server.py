@@ -42,6 +42,9 @@ Two jobs in one program:
    (static/dashboard.html) that reads the API above every 2 seconds and
    shows every motor at a glance, the alarms, each motor's verdicts and
    recent runs, the nodes and the events.
+
+6. Security (step 8): the dashboard and API use HTTPS and need a sign-in
+   (auth.py); the connection to the broker uses TLS and the "server" login.
 """
 import argparse
 import json
@@ -53,14 +56,15 @@ from typing import Optional
 
 import paho.mqtt.client as mqtt
 import uvicorn
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.dirname(HERE))
 from central_store import CentralStore, now_utc   # noqa: E402
-from messaging import TOPIC_ROOT, CONTROL_ROOT, parse_broker    # noqa: E402
+import auth as A                                    # noqa: E402
+from messaging import TOPIC_ROOT, CONTROL_ROOT, parse_broker, add_security_args, security_from_args, Security    # noqa: E402
 
 REQUIRED = ("msg_id", "node_id", "motor_id", "seq", "type", "created_at", "payload")
 
@@ -68,10 +72,12 @@ REQUIRED = ("msg_id", "node_id", "motor_id", "seq", "type", "created_at", "paylo
 class Receiver:
     """MQTT side: subscribe, validate, store."""
 
-    def __init__(self, store, broker, client_id="monitor-server", timeout=15.0):
+    def __init__(self, store, broker, client_id="monitor-server", timeout=15.0, security=None):
         self.store = store
         self.timeout = timeout
-        self.host, self.port = parse_broker(broker)
+        self.security = security or Security()
+        self.host, self.port = parse_broker(broker, self.security.default_port)
+        self._last_problem = None
         self.connected = threading.Event()
         self.closing = False
         self.stats = {"new": 0, "duplicate": 0, "rejected": 0}
@@ -80,6 +86,17 @@ class Receiver:
         self.client.on_disconnect = self.on_disconnect
         self.client.on_message = self.on_message
         self.client.reconnect_delay_set(1, 10)
+        self.client.on_connect_fail = self.on_connect_fail
+        self.security.apply(self.client)            # TLS + login (step 8)
+
+    def problem(self, text):
+        if text != self._last_problem:              # each new problem once, not on every retry
+            self._last_problem = text
+            print(f"[server] {text}", flush=True)
+
+    def on_connect_fail(self, client, userdata):
+        self.problem(f"can't connect to the broker at {self.host}:{self.port}: "
+                     f"{self.security.diagnose(self.host, self.port)}; retrying")
 
     def start(self):
         self.client.connect_async(self.host, self.port, keepalive=30)
@@ -117,13 +134,14 @@ class Receiver:
 
     def on_connect(self, client, userdata, flags, rc, props):
         if rc.is_failure:
-            print(f"broker refused the connection: {rc}", flush=True)
+            self.problem(f"the broker refused the login as {self.security.user!r}: {rc}; retrying")
             return
+        self._last_problem = None
         client.subscribe(f"{TOPIC_ROOT}/#", qos=1)
         self.store.grace()      # we heard nothing while disconnected: don't blame the nodes for it
         self.connected.set()
         resumed = " (resumed session: messages queued while away will follow)" if flags.session_present else ""
-        print(f"[server] connected to broker {self.host}:{self.port}{resumed}", flush=True)
+        print(f"[server] connected to broker {self.host}:{self.port} ({self.security.describe()}){resumed}", flush=True)
 
     def on_disconnect(self, client, userdata, flags, rc, props):
         if self.connected.is_set() and not self.closing:
@@ -173,9 +191,69 @@ def _short(seqs):
     return ", ".join(out)
 
 
-def make_app(store, receiver):
+def make_app(store, receiver, auth=None):
     app = FastAPI(title="Motor monitoring server",
-                  description="Central server of the motor-fault monitoring system. The dashboard is at / (step 6); these are the API endpoints it reads.")
+                  description="Central server of the motor-fault monitoring system. The dashboard is at / (step 6); "
+                              "these are the API endpoints it reads. Sign in first (step 8).")
+    OPEN = {"/login"}        # the only page you can open without signing in
+
+    @app.middleware("http")
+    async def guard(request: Request, call_next):
+        """step 8: every page and API call needs a signed-in user (except the sign-in page)"""
+        user = None
+        if auth and request.url.path not in OPEN:
+            user = auth.user_for(request)
+            if user is None:
+                wants_page = request.method == "GET" and "text/html" in request.headers.get("accept", "")
+                if wants_page:
+                    response = RedirectResponse(A.login_redirect_target(request), status_code=303)
+                else:
+                    response = JSONResponse({"detail": "sign in required"}, status_code=401)
+                response.headers.update(A.SECURITY_HEADERS)
+                return response
+        request.state.user = user
+        response = await call_next(request)
+        response.headers.update(A.SECURITY_HEADERS)
+        if request.url.path in ("/", "/login"):
+            response.headers["Content-Security-Policy"] = A.PAGE_CSP
+        return response
+
+    @app.get("/login", include_in_schema=False)
+    def login_form(request: Request, next: str = "/"):
+        if auth is None:
+            return RedirectResponse("/", status_code=303)
+        if auth.user_for(request):
+            return RedirectResponse(A.safe_next(next), status_code=303)
+        return HTMLResponse(A.login_page(next_path=next), headers={"Cache-Control": "no-store"})
+
+    @app.post("/login", include_in_schema=False)
+    async def login(request: Request):
+        if auth is None:
+            return RedirectResponse("/", status_code=303)
+        form = A.parse_form(await request.body())
+        user, password, nxt = form.get("user", "").strip(), form.get("password", ""), form.get("next", "/")
+        ok, message = auth.check(user, password, A.client_address(request))
+        if not ok:
+            print(f"[server] failed sign-in as {user!r} from {A.client_address(request)}", flush=True)
+            return HTMLResponse(A.login_page(message, nxt, user), status_code=401, headers={"Cache-Control": "no-store"})
+        token = auth.new_session(user)
+        print(f"[server] {user} signed in from {A.client_address(request)}", flush=True)
+        response = RedirectResponse(A.safe_next(nxt), status_code=303)
+        response.headers["Set-Cookie"] = auth.cookie_header(token)
+        return response
+
+    @app.post("/logout", include_in_schema=False)
+    def logout(request: Request):
+        response = RedirectResponse("/login", status_code=303)
+        if auth:
+            auth.end_session(request.cookies.get(A.COOKIE, ""))
+            response.headers["Set-Cookie"] = auth.cookie_header("", max_age=0)
+        return response
+
+    @app.get("/me")
+    def me(request: Request):
+        """who is signed in (the dashboard shows it next to the Sign out button)"""
+        return {"user": request.state.user, "login_required": auth is not None}
 
     @app.get("/", include_in_schema=False)
     def dashboard():
@@ -218,20 +296,40 @@ def make_app(store, receiver):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--broker", default="localhost", help="host or host:port (default localhost:1883)")
-    ap.add_argument("--port", type=int, default=8000, help="web API port (default 8000)")
+    ap.add_argument("--broker", default="localhost", help="host or host:port (default localhost:8883 with TLS)")
+    ap.add_argument("--port", type=int, default=8000, help="dashboard and API port (default 8000)")
     ap.add_argument("--db", default=os.path.join(HERE, "central.db"), help="central database file")
     ap.add_argument("--timeout", type=float, default=15.0,
                     help="seconds without a heartbeat before a node counts as offline (default 15)")
+    g = add_security_args(ap)     # --ca, --user (default: server), --password-file, --no-tls
+    secrets_dir = os.path.join(os.path.dirname(HERE), "secrets")
+    g.add_argument("--web-cert", default=os.path.join(secrets_dir, "web.crt"), help="HTTPS certificate for the dashboard")
+    g.add_argument("--web-key", default=os.path.join(secrets_dir, "web.key"), help="its private key")
+    g.add_argument("--users", default=os.path.join(secrets_dir, "dashboard_users.txt"), help="dashboard logins")
+    g.add_argument("--no-login", action="store_true", help="dashboard without sign-in (only on a computer nobody else uses)")
     a = ap.parse_args()
+    security = security_from_args(a, default_user="server")
+    https = not a.no_tls
+    if https and not (os.path.exists(a.web_cert) and os.path.exists(a.web_key)):
+        sys.exit(f"No HTTPS certificate ({a.web_cert}). Make the secrets first:  "
+                 f"python monitoring/security/setup_security.py   (or use --no-tls)")
+    auth = None
+    if not a.no_login:
+        if not os.path.exists(a.users):
+            sys.exit(f"No dashboard users ({a.users}). Make them with:  python monitoring/security/setup_security.py"
+                     f"   (or use --no-login)")
+        auth = A.Auth(a.users, secure_cookie=https)
     store = CentralStore(a.db)
-    receiver = Receiver(store, a.broker, timeout=a.timeout)
+    receiver = Receiver(store, a.broker, timeout=a.timeout, security=security)
     receiver.start()
     print(f"[server] database {a.db}", flush=True)
     print(f"[server] a node is offline after {a.timeout:g} s without a heartbeat", flush=True)
-    print(f"[server] dashboard on http://localhost:{a.port}   (API: http://localhost:{a.port}/docs)", flush=True)
+    scheme = "https" if https else "http"
+    print(f"[server] dashboard on {scheme}://localhost:{a.port}   (API: {scheme}://localhost:{a.port}/docs)"
+          f"{'' if auth else '   WARNING: no sign-in'}{'' if https else '   WARNING: not encrypted'}", flush=True)
+    tls = {"ssl_certfile": a.web_cert, "ssl_keyfile": a.web_key} if https else {}
     try:
-        uvicorn.run(make_app(store, receiver), host="0.0.0.0", port=a.port, log_level="warning")
+        uvicorn.run(make_app(store, receiver, auth), host="0.0.0.0", port=a.port, log_level="warning", **tls)
     finally:
         receiver.stop()
         print("[server] stopped", flush=True)

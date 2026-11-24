@@ -1,1 +1,3 @@
+# Keep Linux line endings in this folder: the broker and the containers are Linux (step 8).
 * text=auto eol=lf
+*.png binary

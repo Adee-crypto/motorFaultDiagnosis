@@ -7,7 +7,8 @@
 !ml/ml_triggers_load*.json
 !monitoring/
 
-# but not local data, test stores, diagrams or caches
+# but never the secrets (step 8), and not local data, test stores, diagrams or caches
+monitoring/secrets
 monitoring/stores
 monitoring/docs
 monitoring/server/*.db*

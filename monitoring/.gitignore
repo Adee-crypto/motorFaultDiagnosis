@@ -1,3 +1,5 @@
 stores/
 docs/
 server/*.db*
+# step 8: certificates, keys and passwords. NEVER push these.
+secrets/

@@ -252,7 +252,7 @@ one command. Run it from the `monitoring` folder:
 docker compose up -d --build
 ```
 
-Then open http://localhost:8000. The first time takes a few minutes, because
+Then open http://localhost:8000 (https from step 8 on). The first time takes a few minutes, because
 Docker downloads Python and the libraries and builds the image.
 
 | Command (in `monitoring`) | What it does |
@@ -300,5 +300,103 @@ docker compose exec node-3 python monitoring/tests/crash_node.py --hang 30  # fr
 The dashboard measures heartbeat ages on the server's clock, so a Docker
 clock that is a few seconds off from Windows doesn't make nodes look late.
 
+## Step 8: security (done)
+
+Three locks:
+
+1. **Encryption (TLS).** All MQTT traffic goes over TLS on port 8883 (the
+   unencrypted port 1883 is gone), and the dashboard uses HTTPS:
+   **https://localhost:8000**. Every client checks the other side's certificate
+   against our own certificate authority (`secrets/ca.crt`), so nobody can listen
+   in or pretend to be the broker or the server. The CA can only sign for
+   `localhost`, `broker`, `server` and `127.0.0.1`, so even a stolen `ca.key` can't
+   fake any other website.
+2. **Logins.** The broker refuses clients without a valid user name and
+   password. Every client has its own: `server`, `tools` (read-only, for
+   `listener.py`), `healthcheck`, and one per node, whose user name is its node id.
+   The dashboard and API need a sign-in.
+3. **Topic rules** (`broker/acl`). Each login may only use its own topics. A node may
+   only write `monitor/<its id>/...` and read `control/<its id>/...`, so a stolen
+   node password can't fake another motor's results or read other nodes'
+   messages. `tools` may only read.
+
+### First-time setup
+
+From the repo root:
+
+```
+pip install cryptography
+python monitoring/security/setup_security.py
+```
+
+This makes `monitoring/secrets/` (in `.gitignore`, never pushed, never put in the
+image) and prints the first dashboard password (user `admin`). It is also in
+`secrets/dashboard_admin_password.txt`.
+
+To make your browser trust the dashboard, add the CA to Windows once:
+
+```
+Import-Certificate -FilePath monitoring\secrets\ca.crt -CertStoreLocation Cert:\CurrentUser\Root
+```
+
+Windows asks you to confirm. Chrome and Edge then show the padlock. If you skip
+this, the browser warns that the page is "not private"; you can continue anyway.
+To remove it later:
+
+```
+Get-ChildItem Cert:\CurrentUser\Root | Where-Object Subject -like "*Motor monitoring local CA*" | Remove-Item
+```
+
+### Running
+
+`docker compose up -d --build` as before. Each container gets only the secrets it
+needs (Docker `secrets:`, mounted read-only under `/run/secrets/`): a node gets
+just `ca.crt` and its own password. When the broker starts, it turns the
+password list into hashes with Mosquitto's own tool.
+
+The tools on your PC find the secrets by themselves:
+
+```
+python monitoring/listener.py            # TLS, user tools (read-only)
+python monitoring/status.py              # HTTPS, user admin
+python monitoring/node.py --node-id node-9 ... --broker localhost   # needs a login for node-9 first
+```
+
+`--no-tls` connects the old way, to an unsecured broker as in steps 2 to 7.
+
+### Managing logins
+
+| Command (from the repo root) | What it does |
+|---|---|
+| `python monitoring/security/setup_security.py add-user alice` | new dashboard user (asks for a password); no restart needed |
+| `python monitoring/security/setup_security.py remove-user alice` | removes them; signed out within a minute |
+| `python monitoring/security/setup_security.py add-node node-5` | MQTT login for a new node; then `docker compose restart broker` |
+| `python monitoring/security/setup_security.py list` | logins and certificate expiry dates |
+| `python monitoring/security/setup_security.py renew-certs` | new broker/web certificates (same CA); then restart broker and server |
+
+### What the dashboard login does
+
+- Passwords are stored hashed (PBKDF2, 260,000 rounds), never as they are.
+- After signing in, the browser gets a random session cookie: HttpOnly (page
+  scripts can't read it), Secure (HTTPS only) and SameSite=Strict (never sent
+  by other websites). It lasts 12 hours. "Sign out" ends it on the server too.
+- 5 wrong passwords from one address lock sign-in from it for 60 seconds.
+- Scripts (status.py) send the name and password with each request, over HTTPS.
+- Pages are sent with headers that stop other sites from framing them or
+  loading scripts into them.
+
+### Tests run
+
+- Refused at the broker: unencrypted connections, no password, wrong password,
+  and a client trusting a different CA.
+- Blocked by the topic rules: node-1 posting as node-2, node-1 writing control
+  messages, node-1 reading another node's control topic, `tools` writing.
+- Still working: results, heartbeats, last wills, and resend requests (server
+  to node).
+- Dashboard: plain http doesn't answer. Without signing in, pages go to the
+  sign-in page and the API returns 401. A wrong password says so; the 5th
+  locks sign-in for 60 s. A cookie stops working after "Sign out". A removed
+  user is signed out within a minute. A "next" link to another site is ignored.
+
 ## Coming next
-8. Security  9. Cloud
+9. Cloud

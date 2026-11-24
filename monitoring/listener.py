@@ -21,7 +21,7 @@ import sys
 import paho.mqtt.client as mqtt
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from messaging import TOPIC_ROOT, parse_broker  # noqa: E402
+from messaging import TOPIC_ROOT, parse_broker, add_security_args, security_from_args  # noqa: E402
 
 
 class Listener:
@@ -85,28 +85,29 @@ class Listener:
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--broker", default="localhost", help="host or host:port (default localhost:1883)")
+    ap.add_argument("--broker", default="localhost", help="host or host:port (default localhost:8883 with TLS)")
     ap.add_argument("--json", action="store_true", help="print the raw messages")
     ap.add_argument("--heartbeats", action="store_true", help="also print heartbeats (every few seconds per node)")
+    add_security_args(ap)     # --ca, --user (default: tools, which may only read), --password-file, --no-tls
     a = ap.parse_args()
-    host, port = parse_broker(a.broker)
+    security = security_from_args(a, default_user="tools")
+    host, port = parse_broker(a.broker, security.default_port)
     lis = Listener(a.json, a.heartbeats)
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id="listener")
+    security.apply(client)
 
     def on_connect(c, u, f, rc, p):
         if rc.is_failure:
-            print(f"broker refused the connection: {rc}")
-            return
+            sys.exit(f"broker refused the login as {security.user!r}: {rc}")
         c.subscribe(f"{TOPIC_ROOT}/#", qos=1)
-        print(f"listening on {host}:{port}, topic {TOPIC_ROOT}/#  (Ctrl+C to stop)", flush=True)
+        print(f"listening on {host}:{port} ({security.describe()}), topic {TOPIC_ROOT}/#  (Ctrl+C to stop)", flush=True)
 
     client.on_connect = on_connect
     client.on_message = lis.on_message
     try:
         client.connect(host, port, keepalive=30)
-    except OSError as e:
-        sys.exit(f"can't reach the broker at {host}:{port} ({e}). Is it running?  "
-                 f"docker compose -f monitoring/docker-compose.yml up -d")
+    except OSError:
+        sys.exit(f"can't connect to the broker at {host}:{port}: {security.diagnose(host, port)}")
     try:
         client.loop_forever()
     except KeyboardInterrupt:

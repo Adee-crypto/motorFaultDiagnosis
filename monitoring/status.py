@@ -3,10 +3,16 @@ status.py
 ==========
 Asks the central server for every motor's status and prints a table.
 
-    python monitoring/status.py                     # server at localhost:8000
+    python monitoring/status.py                     # server at https://localhost:8000, user admin
     python monitoring/status.py --nodes --events    # also message counts per node and recent events
     python monitoring/status.py --watch 2           # refresh every 2 seconds (Ctrl+C to stop)
-    python monitoring/status.py --server http://192.168.1.20:8000
+    python monitoring/status.py --server https://192.168.1.20:8000
+    python monitoring/status.py --user alice        # asks for alice's password
+
+Step 8: the server needs a sign-in. status.py sends the name and password with
+each request over HTTPS, and checks the server's certificate against
+monitoring/secrets/ca.crt. The password comes from --password-file, or
+secrets/dashboard_admin_password.txt for admin, or it asks you.
 
 Status per motor
   HEALTHY / FAULTY   its node is online; from the latest verdict (or the
@@ -16,17 +22,49 @@ Status per motor
                      is shown with its time, but it is not the current status
 """
 import argparse
+import base64
+import getpass
 import json
 import os
+import ssl
 import sys
 import time
 import urllib.error
 import urllib.request
 
+SECRETS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "secrets")
+CONN = {"ctx": None, "headers": {}}
+
 
 def get(server, path):
-    with urllib.request.urlopen(server.rstrip("/") + path, timeout=5) as r:
-        return json.loads(r.read())
+    req = urllib.request.Request(server.rstrip("/") + path, headers=CONN["headers"])
+    try:
+        with urllib.request.urlopen(req, timeout=15, context=CONN["ctx"]) as r:
+            return json.loads(r.read())
+    except urllib.error.HTTPError as e:
+        if e.code == 401:
+            sys.exit("The server refused the sign-in (wrong name or password, or too many tries: wait a minute).")
+        raise
+
+
+def setup_connection(a):
+    if a.server.startswith("https://"):
+        ca = a.ca or os.path.join(SECRETS, "ca.crt")
+        if not os.path.exists(ca):
+            sys.exit(f"No certificate authority ({ca}). Run:  python monitoring/security/setup_security.py")
+        CONN["ctx"] = ssl.create_default_context(cafile=ca)
+    if a.user:
+        pw_file = a.password_file
+        if not pw_file and a.user == "admin":
+            default = os.path.join(SECRETS, "dashboard_admin_password.txt")
+            pw_file = default if os.path.exists(default) else None
+        if pw_file:
+            with open(pw_file, encoding="utf-8") as fh:
+                password = fh.read().strip()
+        else:
+            password = getpass.getpass(f"Dashboard password for {a.user}: ")
+        token = base64.b64encode(f"{a.user}:{password}".encode()).decode()
+        CONN["headers"] = {"Authorization": f"Basic {token}"}
 
 
 def short_time(iso):
@@ -70,11 +108,15 @@ def show(a):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--server", default="http://localhost:8000")
+    ap.add_argument("--server", default="https://localhost:8000")
+    ap.add_argument("--user", default="admin", help="dashboard user (default admin); empty for a server without sign-in")
+    ap.add_argument("--password-file", help="file with the password (otherwise it asks)")
+    ap.add_argument("--ca", help="certificate authority (default monitoring/secrets/ca.crt)")
     ap.add_argument("--nodes", action="store_true", help="also show message counts and gaps per node")
     ap.add_argument("--events", action="store_true", help="also show the latest node events")
     ap.add_argument("--watch", type=float, metavar="SECONDS", help="refresh every SECONDS until Ctrl+C")
     a = ap.parse_args()
+    setup_connection(a)
     try:
         while True:
             if a.watch:
@@ -85,7 +127,8 @@ def main():
                 break
             time.sleep(a.watch)
     except (urllib.error.URLError, OSError) as e:
-        sys.exit(f"can't reach the server at {a.server} ({e}). Is it running?  python monitoring/server/server.py")
+        hint = " The certificate doesn't match ca.crt." if isinstance(getattr(e, "reason", None), ssl.SSLError) else ""
+        sys.exit(f"can't reach the server at {a.server} ({e}).{hint} Is it running?  docker compose ps")
     except KeyboardInterrupt:
         pass
 
